@@ -76,21 +76,37 @@ const MainPage = () => {
           />
         </aside>
 
-        {/* 中央: プレビューエリア */}
+        {/* 中央: プレビューエリア（全体がドロップ領域） */}
         <section className="center-content">
-          <div className="preview-area">
-            <div className="canvas-container">
+          <FileDropArea onFileDrop={handleFileDrop} className="full-area-drop">
+            <div className="preview-area">
               {layers.length > 0 ? (
-                <CanvasPreview
-                  layers={layers}
-                  canvasSettings={canvasSettings}
-                  onLayerPositionChange={handleLayerPositionChange}
-                />
+                <>
+                  <div className="canvas-container">
+                    <CanvasPreview
+                      layers={layers}
+                      canvasSettings={canvasSettings}
+                      onLayerPositionChange={handleLayerPositionChange}
+                    />
+                  </div>
+                  <div className="drop-overlay">
+                    <div className="drop-hint">
+                      <span className="drop-icon">📁</span>
+                      <span className="drop-text">画像をドロップして追加</span>
+                    </div>
+                  </div>
+                </>
               ) : (
-                <FileDropArea onFileDrop={handleFileDrop} />
+                <div className="empty-canvas">
+                  <div className="empty-content">
+                    <span className="empty-icon">🖼️</span>
+                    <h3>画像をドラッグ&ドロップ</h3>
+                    <p>ここに画像ファイルをドロップして開始してください</p>
+                  </div>
+                </div>
               )}
             </div>
-          </div>
+          </FileDropArea>
         </section>
 
         {/* 右サイドバー: 設定パネル */}
