@@ -17,10 +17,15 @@ const MainPage = () => {
     selectedLayerId,
     selectLayer,
     toggleLayerVisibility,
+    updateLayerProperty,
   } = useLayerManager()
 
   const handleFileDrop = (files: File[]) => {
     handleFiles(files)
+  }
+
+  const handleLayerPositionChange = (layerId: string, position: { x: number; y: number }) => {
+    updateLayerProperty(layerId, 'position', position)
   }
 
   const handleGenerateImage = async () => {
@@ -79,6 +84,7 @@ const MainPage = () => {
                 <CanvasPreview
                   layers={layers}
                   canvasSettings={canvasSettings}
+                  onLayerPositionChange={handleLayerPositionChange}
                 />
               ) : (
                 <FileDropArea onFileDrop={handleFileDrop} />
