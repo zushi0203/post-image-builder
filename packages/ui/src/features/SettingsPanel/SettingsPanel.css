@@ -1,0 +1,156 @@
+/* SettingsPanel スタイル */
+.settings-panel {
+  padding: 1rem;
+  background: var(--color-bg-secondary, #2a2d3a);
+  border-radius: 8px;
+  width: 100%;
+  max-width: 300px;
+}
+
+.settings-panel-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 1rem 0;
+  color: var(--color-text-primary, #ffffff);
+}
+
+.setting-group {
+  margin-bottom: 1.5rem;
+}
+
+.setting-label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: var(--color-text-secondary, #a0a3bd);
+}
+
+.setting-value {
+  font-size: 0.8rem;
+  color: var(--color-text-secondary, #a0a3bd);
+  margin-top: 0.25rem;
+  display: block;
+}
+
+/* スライダー */
+.scale-slider {
+  width: 100%;
+  margin: 0.5rem 0;
+}
+
+.slider-track {
+  position: relative;
+  height: 4px;
+  background: var(--color-bg-tertiary, #1e1f29);
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.slider-thumb {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  background: var(--color-primary, #7c3aed);
+  border-radius: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  cursor: grab;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.slider-thumb:active {
+  cursor: grabbing;
+  transform: translate(-50%, -50%) scale(1.1);
+}
+
+/* サイズ入力 */
+.size-inputs {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.size-input {
+  flex: 1;
+}
+
+.size-input label {
+  font-size: 0.8rem;
+  color: var(--color-text-secondary, #a0a3bd);
+  margin-bottom: 0.25rem;
+  display: block;
+}
+
+.size-input input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid var(--color-border, #3a3d4a);
+  border-radius: 4px;
+  background: var(--color-bg-tertiary, #1e1f29);
+  color: var(--color-text-primary, #ffffff);
+  font-size: 0.9rem;
+}
+
+.size-input input:focus {
+  outline: none;
+  border-color: var(--color-primary, #7c3aed);
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.2);
+}
+
+/* セレクト */
+.format-select button {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-border, #3a3d4a);
+  border-radius: 4px;
+  background: var(--color-bg-tertiary, #1e1f29);
+  color: var(--color-text-primary, #ffffff);
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.format-select button:hover {
+  border-color: var(--color-primary, #7c3aed);
+}
+
+.format-select button:focus {
+  outline: none;
+  border-color: var(--color-primary, #7c3aed);
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.2);
+}
+
+.format-select [data-react-aria-listbox] {
+  background: var(--color-bg-secondary, #2a2d3a);
+  border: 1px solid var(--color-border, #3a3d4a);
+  border-radius: 4px;
+  padding: 0.25rem 0;
+  margin-top: 0.25rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  min-width: 200px;
+}
+
+.format-select [data-react-aria-listbox-item] {
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  color: var(--color-text-primary, #ffffff);
+  font-size: 0.9rem;
+}
+
+.format-select [data-react-aria-listbox-item]:hover {
+  background: var(--color-bg-tertiary, #1e1f29);
+}
+
+.format-select [data-react-aria-listbox-item][data-selected="true"] {
+  background: var(--color-primary, #7c3aed);
+  color: white;
+}
+
+.format-select [data-react-aria-listbox-item][data-focused="true"] {
+  background: var(--color-bg-tertiary, #1e1f29);
+  outline: 2px solid var(--color-primary, #7c3aed);
+  outline-offset: -2px;
+}

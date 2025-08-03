@@ -62,3 +62,44 @@
     pointer-events: auto;
   }
 }
+
+/* エラーダイアログのスタイル */
+[data-react-aria-modal-overlay] {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+[data-react-aria-modal] {
+  background: var(--color-bg-secondary, #2a2d3a);
+  border-radius: 8px;
+  padding: 1.5rem;
+  min-width: 300px;
+  max-width: 90vw;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+[data-react-aria-dialog] h2 {
+  margin: 0 0 1rem 0;
+  color: var(--color-text-primary, #ffffff);
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+[data-react-aria-dialog] p {
+  margin: 0 0 1.5rem 0;
+  color: var(--color-text-secondary, #a0a3bd);
+  line-height: 1.5;
+}
+
+[data-react-aria-dialog] .btn {
+  margin-left: auto;
+  display: block;
+}

@@ -1,4 +1,5 @@
 import React from 'react'
+import { Button } from '../../primitives/Button'
 import './LayerManager.css'
 
 export interface Layer {
@@ -66,16 +67,17 @@ const LayerItem = ({ layer, isSelected, onSelect, onVisibilityToggle }: LayerIte
         {layer.type === 'image' ? 'img' : 'bg'}
       </span>
       <span className="layer-name">{layer.name}</span>
-      <button
+      <Button
+        variant="secondary"
+        size="small"
         className={`layer-visibility-btn ${layer.visible ? 'visible' : 'hidden'}`}
-        onClick={(e) => {
-          e.stopPropagation()
+        onPress={(e) => {
+          e?.stopPropagation?.()
           onVisibilityToggle()
         }}
-        aria-label={layer.visible ? 'レイヤーを非表示' : 'レイヤーを表示'}
       >
         {layer.visible ? '👁' : '🚫'}
-      </button>
+      </Button>
     </div>
   )
 }

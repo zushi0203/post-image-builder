@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react'
 import { Button } from '../../primitives/Button'
+import { Dialog, DialogTrigger, Modal, ModalOverlay } from 'react-aria-components'
 import './FileDropArea.css'
 
 export interface FileDropAreaProps {
@@ -18,6 +19,7 @@ export const FileDropArea = ({
   children,
 }: FileDropAreaProps) => {
   const [isDragOver, setIsDragOver] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string>('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -40,6 +42,11 @@ export const FileDropArea = ({
     const files = Array.from(e.dataTransfer.files)
     const imageFiles = files.filter(file => file.type.startsWith('image/'))
 
+    if (files.length > 0 && imageFiles.length === 0) {
+      setErrorMessage('画像ファイルのみアップロード可能です')
+      return
+    }
+
     if (imageFiles.length > 0) {
       onFileDrop?.(imageFiles)
     }
@@ -51,42 +58,66 @@ export const FileDropArea = ({
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
-    if (files.length > 0) {
-      onFileDrop?.(files)
+    const imageFiles = files.filter(file => file.type.startsWith('image/'))
+
+    if (files.length > 0 && imageFiles.length === 0) {
+      setErrorMessage('画像ファイルのみ選択可能です')
+      return
+    }
+
+    if (imageFiles.length > 0) {
+      onFileDrop?.(imageFiles)
     }
     // Reset input value to allow selecting the same file again
     e.target.value = ''
   }
 
   return (
-    <div
-      className={`file-drop-area ${isDragOver ? 'drag-over' : ''} ${className}`}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-    >
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept={accept}
-        multiple={multiple}
-        onChange={handleFileInputChange}
-        className="file-input-hidden"
-        aria-hidden="true"
-      />
+    <>
+      <div
+        className={`file-drop-area ${isDragOver ? 'drag-over' : ''} ${className}`}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept={accept}
+          multiple={multiple}
+          onChange={handleFileInputChange}
+          className="file-input-hidden"
+          aria-hidden="true"
+        />
 
-      {children || (
-        <div className="file-drop-content">
-          <div className="file-drop-icon">🖼️</div>
-          <p className="file-drop-text">
-            画像をドラッグ&ドロップ
-          </p>
-          <Button variant="primary" onPress={handleFileSelect}>
-            ファイル選択
-          </Button>
-        </div>
-      )}
-    </div>
+        {children || (
+          <div className="file-drop-content">
+            <div className="file-drop-icon">🖼️</div>
+            <p className="file-drop-text">
+              画像をドラッグ&ドロップ
+            </p>
+            <Button variant="primary" onPress={handleFileSelect}>
+              ファイル選択
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* エラーダイアログ */}
+      <DialogTrigger isOpen={!!errorMessage}>
+        <ModalOverlay>
+          <Modal>
+            <Dialog>
+              <h2>エラー</h2>
+              <p>{errorMessage}</p>
+              <Button onPress={() => setErrorMessage('')}>
+                OK
+              </Button>
+            </Dialog>
+          </Modal>
+        </ModalOverlay>
+      </DialogTrigger>
+    </>
   )
 }
 
