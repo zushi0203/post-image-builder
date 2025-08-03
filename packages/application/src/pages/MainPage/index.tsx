@@ -1,59 +1,64 @@
-import React from 'react'
+import React, { useState } from 'react'
+import { ToggleSwitch, Button, LayerManager, FileDropArea, type Layer } from '@post-image-builder/ui'
 import './MainPage.css'
 
 const MainPage = () => {
+  const [previewMode, setPreviewMode] = useState(false)
+  const [layers, setLayers] = useState<Layer[]>([
+    { id: '1', name: 'ファイル名1.png', type: 'image', visible: true, zIndex: 1 },
+    { id: '2', name: 'ファイル名2.png', type: 'image', visible: true, zIndex: 2 },
+    { id: '3', name: 'background.jpg', type: 'background', visible: true, zIndex: 0 },
+  ])
+  const [selectedLayerId, setSelectedLayerId] = useState<string>()
+
+  const handleFileDrop = (files: File[]) => {
+    console.log('Dropped files:', files)
+    // TODO: Handle file processing
+  }
+
+  const handleLayerVisibilityToggle = (layerId: string) => {
+    setLayers(prev => prev.map(layer =>
+      layer.id === layerId
+        ? { ...layer, visible: !layer.visible }
+        : layer
+    ))
+  }
+
+  const handleGenerateImage = () => {
+    console.log('Generate image')
+    // TODO: Implement image generation
+  }
   return (
     <div className="main-page">
       {/* ヘッダー */}
       <header className="main-header">
         <h1>Post Image Builder</h1>
-        <div className="preview-mode-toggle">
-          <span>プレビューモード</span>
-          <label className="toggle-switch">
-            <input type="checkbox" />
-            <span className="slider"></span>
-          </label>
-        </div>
+        <ToggleSwitch
+          isSelected={previewMode}
+          onChange={setPreviewMode}
+          aria-label="プレビューモード"
+        >
+          プレビューモード
+        </ToggleSwitch>
       </header>
 
       {/* メインコンテンツ */}
       <main className="main-content">
         {/* 左サイドバー: レイヤー管理 */}
         <aside className="left-sidebar">
-          <section className="layer-manager">
-            <h2>画像の重なり</h2>
-            <div className="layer-list">
-              <div className="layer-item">
-                <span className="layer-icon">img</span>
-                <span className="layer-name">ファイル名</span>
-              </div>
-              <div className="layer-item">
-                <span className="layer-icon">img</span>
-                <span className="layer-name">ファイル名</span>
-              </div>
-              <div className="layer-item">
-                <span className="layer-icon">img</span>
-                <span className="layer-name">ファイル名</span>
-              </div>
-              <div className="layer-item">
-                <span className="layer-icon">img</span>
-                <span className="layer-name">ファイル名</span>
-              </div>
-            </div>
-          </section>
+          <LayerManager
+            layers={layers}
+            selectedLayerId={selectedLayerId}
+            onLayerSelect={setSelectedLayerId}
+            onLayerVisibilityToggle={handleLayerVisibilityToggle}
+          />
         </aside>
 
         {/* 中央: プレビューエリア */}
         <section className="center-content">
           <div className="preview-area">
             <div className="canvas-container">
-              <div className="drop-zone">
-                <div className="drop-zone-content">
-                  <div className="image-icon">🖼</div>
-                  <p>画像をドラッグ&amp;ドロップ</p>
-                  <button className="file-select-button">ファイル選択</button>
-                </div>
-              </div>
+              <FileDropArea onFileDrop={handleFileDrop} />
             </div>
           </div>
         </section>
@@ -87,7 +92,9 @@ const MainPage = () => {
               </ul>
             </div>
 
-            <button className="generate-button">画像を生成</button>
+            <Button variant="success" size="large" onPress={handleGenerateImage}>
+              画像を生成
+            </Button>
           </section>
         </aside>
       </main>
