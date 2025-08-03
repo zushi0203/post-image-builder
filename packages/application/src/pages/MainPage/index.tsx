@@ -1,7 +1,7 @@
 import React from 'react'
 import { useAtom } from 'jotai'
-import { ToggleSwitch, Button, LayerManager, FileDropArea } from '@post-image-builder/ui'
-import { previewModeAtom, isGeneratingAtom } from '../../store/atoms'
+import { ToggleSwitch, Button, LayerManager, FileDropArea, CanvasPreview } from '@post-image-builder/ui'
+import { previewModeAtom, isGeneratingAtom, canvasSettingsAtom } from '../../store/atoms'
 import { useFileHandler } from '../../hooks/useFileHandler'
 import { useLayerManager } from '../../hooks/useLayerManager'
 import './MainPage.css'
@@ -9,6 +9,7 @@ import './MainPage.css'
 const MainPage = () => {
   const [previewMode, setPreviewMode] = useAtom(previewModeAtom)
   const [isGenerating, setIsGenerating] = useAtom(isGeneratingAtom)
+  const [canvasSettings] = useAtom(canvasSettingsAtom)
 
   const { handleFiles } = useFileHandler()
   const {
@@ -64,7 +65,7 @@ const MainPage = () => {
         <aside className="left-sidebar">
           <LayerManager
             layers={uiLayers}
-            selectedLayerId={selectedLayerId}
+            selectedLayerId={selectedLayerId || undefined}
             onLayerSelect={selectLayer}
             onLayerVisibilityToggle={toggleLayerVisibility}
           />
@@ -74,7 +75,14 @@ const MainPage = () => {
         <section className="center-content">
           <div className="preview-area">
             <div className="canvas-container">
-              <FileDropArea onFileDrop={handleFileDrop} />
+              {layers.length > 0 ? (
+                <CanvasPreview
+                  layers={layers}
+                  canvasSettings={canvasSettings}
+                />
+              ) : (
+                <FileDropArea onFileDrop={handleFileDrop} />
+              )}
             </div>
           </div>
         </section>
