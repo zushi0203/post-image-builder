@@ -1,33 +1,49 @@
-import React, { useState } from 'react'
-import { ToggleSwitch, Button, LayerManager, FileDropArea, type Layer } from '@post-image-builder/ui'
+import React from 'react'
+import { useAtom } from 'jotai'
+import { ToggleSwitch, Button, LayerManager, FileDropArea } from '@post-image-builder/ui'
+import { previewModeAtom, isGeneratingAtom } from '../../store/atoms'
+import { useFileHandler } from '../../hooks/useFileHandler'
+import { useLayerManager } from '../../hooks/useLayerManager'
 import './MainPage.css'
 
 const MainPage = () => {
-  const [previewMode, setPreviewMode] = useState(false)
-  const [layers, setLayers] = useState<Layer[]>([
-    { id: '1', name: 'ファイル名1.png', type: 'image', visible: true, zIndex: 1 },
-    { id: '2', name: 'ファイル名2.png', type: 'image', visible: true, zIndex: 2 },
-    { id: '3', name: 'background.jpg', type: 'background', visible: true, zIndex: 0 },
-  ])
-  const [selectedLayerId, setSelectedLayerId] = useState<string>()
+  const [previewMode, setPreviewMode] = useAtom(previewModeAtom)
+  const [isGenerating, setIsGenerating] = useAtom(isGeneratingAtom)
+
+  const { handleFiles } = useFileHandler()
+  const {
+    layers,
+    selectedLayerId,
+    selectLayer,
+    toggleLayerVisibility,
+  } = useLayerManager()
 
   const handleFileDrop = (files: File[]) => {
-    console.log('Dropped files:', files)
-    // TODO: Handle file processing
+    handleFiles(files)
   }
 
-  const handleLayerVisibilityToggle = (layerId: string) => {
-    setLayers(prev => prev.map(layer =>
-      layer.id === layerId
-        ? { ...layer, visible: !layer.visible }
-        : layer
-    ))
+  const handleGenerateImage = async () => {
+    setIsGenerating(true)
+    try {
+      // TODO: 画像生成処理を実装
+      console.log('Generating image with layers:', layers)
+      await new Promise(resolve => setTimeout(resolve, 2000)) // 仮の処理時間
+    } catch (error) {
+      console.error('Failed to generate image:', error)
+    } finally {
+      setIsGenerating(false)
+    }
   }
 
-  const handleGenerateImage = () => {
-    console.log('Generate image')
-    // TODO: Implement image generation
-  }
+  // UIコンポーネント用のレイヤーデータに変換
+  const uiLayers = layers.map(layer => ({
+    id: layer.id,
+    name: layer.name,
+    type: layer.type,
+    visible: layer.visible,
+    zIndex: layer.zIndex,
+  }))
+
   return (
     <div className="main-page">
       {/* ヘッダー */}
@@ -47,10 +63,10 @@ const MainPage = () => {
         {/* 左サイドバー: レイヤー管理 */}
         <aside className="left-sidebar">
           <LayerManager
-            layers={layers}
+            layers={uiLayers}
             selectedLayerId={selectedLayerId}
-            onLayerSelect={setSelectedLayerId}
-            onLayerVisibilityToggle={handleLayerVisibilityToggle}
+            onLayerSelect={selectLayer}
+            onLayerVisibilityToggle={toggleLayerVisibility}
           />
         </aside>
 
@@ -92,8 +108,13 @@ const MainPage = () => {
               </ul>
             </div>
 
-            <Button variant="success" size="large" onPress={handleGenerateImage}>
-              画像を生成
+            <Button
+              variant="success"
+              size="large"
+              onPress={handleGenerateImage}
+              isDisabled={isGenerating}
+            >
+              {isGenerating ? '生成中...' : '画像を生成'}
             </Button>
           </section>
         </aside>

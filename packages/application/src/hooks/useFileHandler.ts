@@ -1,0 +1,79 @@
+import { useCallback } from 'react'
+import { useAtom, useSetAtom } from 'jotai'
+import { addLayerAtom, canvasSettingsAtom } from '../store/atoms'
+import {
+  loadImageFromFile,
+  getFileNameWithoutExtension,
+  getImageType,
+  isSupportedImageFormat,
+  calculateOptimalSize
+} from '../utils/imageUtils'
+import type { ImageLayer } from '../store/types'
+
+export const useFileHandler = () => {
+  const [canvasSettings] = useAtom(canvasSettingsAtom)
+  const addLayer = useSetAtom(addLayerAtom)
+
+  const handleFiles = useCallback(async (files: File[]) => {
+    const validFiles = files.filter(isSupportedImageFormat)
+
+    if (validFiles.length === 0) {
+      console.warn('No supported image files found')
+      return
+    }
+
+    // ファイルを並列で処理
+    const layerPromises = validFiles.map(async (file) => {
+      try {
+        const imageData = await loadImageFromFile(file)
+        const imageType = getImageType(file)
+
+        // 画像サイズを計算
+        const { scale } = calculateOptimalSize(
+          imageData.naturalWidth,
+          imageData.naturalHeight,
+          canvasSettings.width,
+          canvasSettings.height
+        )
+
+        const newLayer: Omit<ImageLayer, 'id' | 'zIndex'> = {
+          name: getFileNameWithoutExtension(file.name),
+          type: imageType,
+          file,
+          imageData,
+          visible: true,
+          position: {
+            x: canvasSettings.width / 2,
+            y: canvasSettings.height / 2,
+          },
+          scale,
+          opacity: 1,
+          rotation: 0,
+        }
+
+        return addLayer(newLayer)
+      } catch (error) {
+        console.error(`Failed to process file ${file.name}:`, error)
+        return null
+      }
+    })
+
+    try {
+      const results = await Promise.all(layerPromises)
+      const successCount = results.filter(Boolean).length
+
+      console.log(`Successfully processed ${successCount} of ${validFiles.length} files`)
+
+      if (successCount < validFiles.length) {
+        // TODO: ユーザーに通知する仕組みを追加
+        console.warn(`${validFiles.length - successCount} files failed to process`)
+      }
+    } catch (error) {
+      console.error('Error processing files:', error)
+    }
+  }, [addLayer, canvasSettings])
+
+  return {
+    handleFiles,
+  }
+}
