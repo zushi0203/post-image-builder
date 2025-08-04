@@ -1,7 +1,15 @@
+export interface GifFrame {
+  id: string
+  imageData: HTMLImageElement
+  delay: number // milliseconds
+  width: number
+  height: number
+}
+
 export interface ImageLayer {
   id: string
   name: string
-  type: 'image' | 'background'
+  type: 'image' | 'background' | 'gif'
   file: File
   imageData: HTMLImageElement | null
   visible: boolean
@@ -13,6 +21,9 @@ export interface ImageLayer {
   scale: number
   opacity: number
   rotation: number
+  // GIF用フレーム情報
+  frames?: GifFrame[]
+  currentFrameIndex?: number
 }
 
 export interface CanvasSettings {

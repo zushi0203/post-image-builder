@@ -3,7 +3,7 @@ import React, { useRef, useEffect, useState, useCallback } from 'react'
 interface ImageLayer {
   id: string
   name: string
-  type: 'image' | 'background'
+  type: 'image' | 'background' | 'gif'
   file: File
   imageData: HTMLImageElement | null
   visible: boolean
@@ -15,6 +15,15 @@ interface ImageLayer {
   scale: number
   opacity: number
   rotation: number
+  // GIF用フレーム情報
+  frames?: Array<{
+    id: string
+    imageData: HTMLImageElement
+    delay: number
+    width: number
+    height: number
+  }>
+  currentFrameIndex?: number
 }
 
 interface CanvasSettings {

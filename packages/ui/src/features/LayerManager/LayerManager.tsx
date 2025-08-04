@@ -5,7 +5,7 @@ import './LayerManager.css'
 export interface Layer {
   id: string
   name: string
-  type: 'image' | 'background'
+  type: 'image' | 'background' | 'gif'
   visible: boolean
   zIndex: number
 }

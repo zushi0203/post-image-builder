@@ -1,7 +1,14 @@
 import React from 'react'
-import { useAtom } from 'jotai'
-import { ToggleSwitch, Button, LayerManager, FileDropArea, CanvasPreview } from '@post-image-builder/ui'
-import { previewModeAtom, isGeneratingAtom, canvasSettingsAtom } from '../../store/atoms'
+import { useAtom, useAtomValue } from 'jotai'
+import { ToggleSwitch, Button, LayerManager, FileDropArea, CanvasPreview, AnimationTimeline } from '@post-image-builder/ui'
+import {
+  previewModeAtom,
+  isGeneratingAtom,
+  canvasSettingsAtom,
+  hasGifLayersAtom,
+  timelineLayersAtom,
+  setLayerFrameAtom
+} from '../../store/atoms'
 import { useFileHandler } from '../../hooks/useFileHandler'
 import { useLayerManager } from '../../hooks/useLayerManager'
 import './MainPage.css'
@@ -10,6 +17,11 @@ const MainPage = () => {
   const [previewMode, setPreviewMode] = useAtom(previewModeAtom)
   const [isGenerating, setIsGenerating] = useAtom(isGeneratingAtom)
   const [canvasSettings] = useAtom(canvasSettingsAtom)
+  const [, setLayerFrame] = useAtom(setLayerFrameAtom)
+
+  const hasGifLayers = useAtomValue(hasGifLayersAtom)
+  console.log('hasGifLayers:', hasGifLayers)
+  const timelineLayers = useAtomValue(timelineLayersAtom)
 
   const { handleFiles } = useFileHandler()
   const {
@@ -26,6 +38,10 @@ const MainPage = () => {
 
   const handleLayerPositionChange = (layerId: string, position: { x: number; y: number }) => {
     updateLayerProperty(layerId, 'position', position)
+  }
+
+  const handleFrameSelect = (layerId: string, frameIndex: number) => {
+    setLayerFrame(layerId, frameIndex)
   }
 
   const handleGenerateImage = async () => {
@@ -106,6 +122,15 @@ const MainPage = () => {
                 </div>
               )}
             </div>
+
+            {/* GIFフレーム表示タイムライン */}
+            {hasGifLayers && (
+              <AnimationTimeline
+                layers={timelineLayers}
+                onFrameSelect={handleFrameSelect}
+                className="animation-timeline-container"
+              />
+            )}
           </FileDropArea>
         </section>
 

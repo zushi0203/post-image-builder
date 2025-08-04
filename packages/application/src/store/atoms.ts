@@ -14,6 +14,41 @@ export const selectedLayerAtom = atom((get) => {
   return layers.find(layer => layer.id === selectedId) || null
 })
 
+// GIFレイヤーがあるかどうかを判定する派生atom
+export const hasGifLayersAtom = atom((get) => {
+  const layers = get(layersAtom)
+  console.log('Checking for GIF layers:', layers.map(l => ({
+    name: l.name,
+    type: l.type,
+    hasFrames: !!l.frames,
+    frameCount: l.frames?.length || 0
+  })))
+
+  const hasGifs = layers.some(layer => {
+    const isGif = layer.type === 'gif'
+    const hasFrames = layer.frames && layer.frames.length > 0
+    console.log(`Layer ${layer.name}: isGif=${isGif}, hasFrames=${hasFrames}`)
+    return isGif && hasFrames
+  })
+
+  console.log('hasGifLayers result:', hasGifs)
+  return hasGifs
+})
+
+// タイムライン表示用のレイヤーデータを取得する派生atom
+export const timelineLayersAtom = atom((get) => {
+  const layers = get(layersAtom)
+  return layers
+    .filter(layer => layer.type === 'gif' && layer.frames && layer.frames.length > 0)
+    .map(layer => ({
+      id: layer.id,
+      name: layer.name,
+      visible: layer.visible,
+      frames: layer.frames || [],
+      currentFrameIndex: layer.currentFrameIndex || 0,
+    }))
+})
+
 // キャンバス設定（ローカルストレージに保存）
 export const canvasSettingsAtom = atomWithStorage<CanvasSettings>('canvasSettings', {
   width: 1920,
@@ -115,6 +150,17 @@ export const toggleLayerVisibilityAtom = atom(
     const layers = get(layersAtom)
     set(layersAtom, layers.map(layer =>
       layer.id === layerId ? { ...layer, visible: !layer.visible } : layer
+    ))
+  }
+)
+
+// GIFレイヤーのフレーム選択
+export const setLayerFrameAtom = atom(
+  null,
+  (get, set, layerId: string, frameIndex: number) => {
+    const layers = get(layersAtom)
+    set(layersAtom, layers.map(layer =>
+      layer.id === layerId ? { ...layer, currentFrameIndex: frameIndex } : layer
     ))
   }
 )

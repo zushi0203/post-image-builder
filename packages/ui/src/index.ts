@@ -7,3 +7,4 @@ export { LayerManager, type LayerManagerProps, type Layer } from './features/Lay
 export { FileDropArea, type FileDropAreaProps } from './features/FileDropArea'
 export { SettingsPanel, type SettingsPanelProps } from './features/SettingsPanel'
 export { CanvasPreview } from './features/CanvasPreview'
+export { AnimationTimeline, type AnimationTimelineProps, type AnimationTimelineLayer, type FrameInfo } from './features/AnimationTimeline'

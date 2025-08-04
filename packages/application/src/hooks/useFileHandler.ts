@@ -6,7 +6,8 @@ import {
   getFileNameWithoutExtension,
   getImageType,
   isSupportedImageFormat,
-  calculateOptimalSize
+  calculateOptimalSize,
+  parseGifFrames
 } from '../utils/imageUtils'
 import type { ImageLayer } from '../store/types'
 
@@ -27,6 +28,8 @@ export const useFileHandler = () => {
       try {
         const imageData = await loadImageFromFile(file)
         const imageType = getImageType(file)
+
+        console.log(`Processing file: ${file.name}, type: ${file.type}, detected as: ${imageType}`)
 
         // 画像サイズを計算
         const { scale } = calculateOptimalSize(
@@ -49,6 +52,20 @@ export const useFileHandler = () => {
           scale,
           opacity: 1,
           rotation: 0,
+        }
+
+        // GIFの場合はフレーム情報を追加
+        if (imageType === 'gif') {
+          try {
+            const frames = await parseGifFrames(file)
+            newLayer.frames = frames
+            newLayer.currentFrameIndex = 0
+            console.log(`GIF frames extracted: ${frames.length} frames`)
+          } catch (error) {
+            console.warn('Failed to parse GIF frames, treating as static image:', error)
+            // フレーム解析に失敗した場合は静止画として扱う
+            newLayer.type = 'image'
+          }
         }
 
         return addLayer(newLayer)
