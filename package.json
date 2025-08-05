@@ -5,7 +5,8 @@
   "private": true,
   "type": "module",
   "workspaces": [
-    "packages/*"
+    "packages/application",
+    "packages/ui"
   ],
   "scripts": {
     "dev": "npm run dev --workspace=@post-image-builder/application",
