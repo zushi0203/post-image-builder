@@ -7,7 +7,9 @@ import {
   getImageType,
   isSupportedImageFormat,
   calculateOptimalSize,
-  parseGifFrames
+  parseGifFrames,
+  logGifInfo,
+  createPerformanceMonitor
 } from '../utils/imageUtils'
 import type { ImageLayer } from '../store/types'
 
@@ -57,10 +59,27 @@ export const useFileHandler = () => {
         // GIFの場合はフレーム情報を追加
         if (imageType === 'gif') {
           try {
-            const frames = await parseGifFrames(file)
-            newLayer.frames = frames
+            const monitor = createPerformanceMonitor()
+            monitor.start()
+            
+            const gifInfo = await parseGifFrames(file, {
+              maxFrames: 200, // フレーム数上限を拡張
+              maxSize: 4096,  // サイズ制限を拡張
+              onProgress: (current, total) => {
+                console.log(`GIF processing progress: ${Math.round((current / total) * 100)}%`)
+              }
+            })
+            
+            const performance = monitor.end()
+            console.log(`GIF processing completed in ${performance.executionTime.toFixed(2)}ms`)
+            
+            newLayer.gifInfo = gifInfo
             newLayer.currentFrameIndex = 0
-            console.log(`GIF frames extracted: ${frames.length} frames`)
+            
+            // 詳細情報をログ出力
+            logGifInfo(gifInfo)
+            
+            console.log(`GIF successfully processed: ${gifInfo.frames.length} frames, ${gifInfo.totalDuration}ms duration`)
           } catch (error) {
             console.warn('Failed to parse GIF frames, treating as static image:', error)
             // フレーム解析に失敗した場合は静止画として扱う
