@@ -61,13 +61,15 @@
   /* フレームコンテナ */
   .frames-container {
     display: flex;
+    flex-wrap: wrap;
     gap: 0.5rem;
-    overflow-x: auto;
+    max-height: 200px;
+    overflow-y: auto;
     padding-bottom: 0.25rem;
   }
 
   .frames-container::-webkit-scrollbar {
-    height: 4px;
+    width: 4px;
   }
 
   .frames-container::-webkit-scrollbar-track {
@@ -92,7 +94,8 @@
     padding: 0.25rem;
     cursor: pointer;
     transition: all 0.15s ease;
-    min-width: 72px;
+    width: 72px;
+    flex-shrink: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
