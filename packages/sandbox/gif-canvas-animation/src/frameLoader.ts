@@ -10,7 +10,7 @@ const fileToArrayBuffer = (file: File): Promise<ArrayBuffer> => {
   })
 }
 
-const processFrame = async (rawFrame: any, index: number): Promise<GifFrame> => {
+const processFrame = async (rawFrame: any): Promise<GifFrame> => {
   const canvas = document.createElement('canvas')
   canvas.width = rawFrame.dims.width
   canvas.height = rawFrame.dims.height
@@ -64,7 +64,7 @@ export const loadGifFrames = async (
         continue
       }
       
-      const frame = await processFrame(rawFrame, i)
+      const frame = await processFrame(rawFrame)
       frames.push(frame)
       totalDuration += frame.delay
     }
@@ -76,7 +76,7 @@ export const loadGifFrames = async (
       width: gif.lsd.width,
       height: gif.lsd.height,
       totalDuration,
-      loopCount: gif.gce?.loopCount || 0
+      loopCount: (gif as any).gce?.loopCount || 0
     }
   } catch (error) {
     console.error('Error loading GIF frames:', error)

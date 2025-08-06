@@ -22,11 +22,17 @@ export const drawFrame = (
   const ctx = canvas.getContext('2d')
   if (!ctx) return
 
-  canvas.width = frame.width
-  canvas.height = frame.height
+  // Canvas を 500x500px に固定
+  canvas.width = 500
+  canvas.height = 500
   
-  ctx.clearRect(0, 0, canvas.width, canvas.height)
-  ctx.drawImage(frame.canvas, 0, 0)
+  // 背景をクリア
+  ctx.clearRect(0, 0, 500, 500)
+  
+  // フレームを中央配置で描画
+  const x = (500 - frame.width) / 2
+  const y = (500 - frame.height) / 2
+  ctx.drawImage(frame.canvas, x, y)
 }
 
 export const updateAnimationState = (

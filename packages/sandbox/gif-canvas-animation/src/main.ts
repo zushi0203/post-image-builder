@@ -5,6 +5,7 @@ import {
   createAnimationLoop,
   drawFrame
 } from './animation.js'
+import { exportToGif, downloadGif } from './gifExporter.js'
 import type { GifInfo, AnimationState } from './types.js'
 
 const getElement = <T extends HTMLElement>(id: string): T => {
@@ -28,10 +29,12 @@ const updateControlButtons = (state: AnimationState, hasFrames: boolean): void =
   const playBtn = getElement<HTMLButtonElement>('playBtn')
   const pauseBtn = getElement<HTMLButtonElement>('pauseBtn')
   const resetBtn = getElement<HTMLButtonElement>('resetBtn')
+  const exportBtn = getElement<HTMLButtonElement>('exportBtn')
 
   playBtn.disabled = !hasFrames || state.isPlaying
   pauseBtn.disabled = !hasFrames || !state.isPlaying
   resetBtn.disabled = !hasFrames
+  exportBtn.disabled = !hasFrames
 }
 
 const displayGifInfo = (gifInfo: GifInfo, fileName: string): void => {
@@ -135,9 +138,11 @@ const initializeApp = (): void => {
   const playBtn = getElement<HTMLButtonElement>('playBtn')
   const pauseBtn = getElement<HTMLButtonElement>('pauseBtn')
   const resetBtn = getElement<HTMLButtonElement>('resetBtn')
+  const exportBtn = getElement<HTMLButtonElement>('exportBtn')
   
   let currentAnimation: ReturnType<typeof createAnimationLoop> | null = null
   let currentState = createAnimationState()
+  let currentGifInfo: GifInfo | null = null
   
   const config = createAnimationConfig()
   
@@ -147,6 +152,7 @@ const initializeApp = (): void => {
   }
 
   const onGifLoaded = (gifInfo: GifInfo, fileName: string): void => {
+    currentGifInfo = gifInfo
     currentAnimation = createAnimationLoop(
       canvas,
       gifInfo,
@@ -172,6 +178,28 @@ const initializeApp = (): void => {
 
   resetBtn.addEventListener('click', () => {
     currentAnimation?.reset()
+  })
+
+  exportBtn.addEventListener('click', async () => {
+    if (!currentGifInfo) return
+
+    try {
+      exportBtn.textContent = '🔄 処理中...'
+      exportBtn.disabled = true
+      
+      console.log('🚀 Starting GIF export...')
+      const blob = await exportToGif(currentGifInfo)
+      
+      const timestamp = new Date().toISOString().slice(0, 19).replace(/[:-]/g, '')
+      downloadGif(blob, `animation_500x500_${timestamp}.gif`)
+      
+    } catch (error) {
+      console.error('❌ GIF export failed:', error)
+      showError('GIF出力に失敗しました: ' + (error instanceof Error ? error.message : 'Unknown error'))
+    } finally {
+      exportBtn.textContent = '📁 GIF出力'
+      exportBtn.disabled = !currentGifInfo
+    }
   })
 
   setupFileHandling(canvas, onGifLoaded)
