@@ -29,10 +29,23 @@ export const drawFrame = (
   // 背景をクリア
   ctx.clearRect(0, 0, 500, 500)
   
-  // フレームを中央配置で描画
-  const x = (500 - frame.width) / 2
-  const y = (500 - frame.height) / 2
-  ctx.drawImage(frame.canvas, x, y)
+  // 画像全体を500x500Canvasに適切にスケール/配置
+  const scaleX = 500 / frame.width
+  const scaleY = 500 / frame.height
+  const scale = Math.min(scaleX, scaleY) // アスペクト比を保持
+  
+  const scaledWidth = frame.width * scale
+  const scaledHeight = frame.height * scale
+  
+  // 500x500Canvas内での中央配置
+  const offsetX = (500 - scaledWidth) / 2
+  const offsetY = (500 - scaledHeight) / 2
+  
+  ctx.drawImage(
+    frame.canvas,
+    0, 0, frame.width, frame.height, // 元画像全体
+    offsetX, offsetY, scaledWidth, scaledHeight // 500x500Canvas内の描画位置とサイズ
+  )
 }
 
 export const updateAnimationState = (

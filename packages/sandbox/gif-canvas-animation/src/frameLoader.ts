@@ -10,25 +10,34 @@ const fileToArrayBuffer = (file: File): Promise<ArrayBuffer> => {
   })
 }
 
-const processFrame = async (rawFrame: any): Promise<GifFrame> => {
+const processFrame = async (rawFrame: any, gifWidth: number, gifHeight: number): Promise<GifFrame> => {
+  // 画像全体サイズのCanvasを作成
   const canvas = document.createElement('canvas')
-  canvas.width = rawFrame.dims.width
-  canvas.height = rawFrame.dims.height
+  canvas.width = gifWidth
+  canvas.height = gifHeight
   
   const ctx = canvas.getContext('2d')
   if (!ctx) {
     throw new Error('Failed to get canvas context')
   }
 
-  const imageData = ctx.createImageData(rawFrame.dims.width, rawFrame.dims.height)
-  imageData.data.set(rawFrame.patch)
-  ctx.putImageData(imageData, 0, 0)
+  // 背景を透明でクリア
+  ctx.clearRect(0, 0, gifWidth, gifHeight)
+
+  // フレームデータのImageDataを作成
+  const frameImageData = ctx.createImageData(rawFrame.dims.width, rawFrame.dims.height)
+  frameImageData.data.set(rawFrame.patch)
+  
+  // フレームを正しい位置に描画
+  ctx.putImageData(frameImageData, rawFrame.dims.left, rawFrame.dims.top)
 
   return {
     canvas,
     delay: rawFrame.delay || 100,
-    width: rawFrame.dims.width,
-    height: rawFrame.dims.height
+    width: gifWidth,
+    height: gifHeight,
+    left: rawFrame.dims.left,
+    top: rawFrame.dims.top
   }
 }
 
@@ -64,7 +73,7 @@ export const loadGifFrames = async (
         continue
       }
       
-      const frame = await processFrame(rawFrame)
+      const frame = await processFrame(rawFrame, gif.lsd.width, gif.lsd.height)
       frames.push(frame)
       totalDuration += frame.delay
     }

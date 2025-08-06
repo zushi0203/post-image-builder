@@ -3,6 +3,8 @@ export interface GifFrame {
   delay: number
   width: number
   height: number
+  left: number
+  top: number
 }
 
 export interface GifInfo {
