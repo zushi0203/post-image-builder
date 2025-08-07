@@ -66,6 +66,42 @@ const applyRotationTransform = (
 }
 
 /**
+ * 描画用の画像ソースを取得（通常画像またはGIFフレーム）
+ */
+const getImageSource = (layer: ImageLayer): CanvasImageSource | null => {
+  // GIFレイヤーの場合は現在のフレームを取得
+  if (layer.type === 'gif' && layer.gifInfo && layer.gifInfo.frames.length > 0) {
+    const frameIndex = layer.currentFrameIndex || 0
+    const validIndex = Math.max(0, Math.min(frameIndex, layer.gifInfo.frames.length - 1))
+    const currentFrame = layer.gifInfo.frames[validIndex]
+    return currentFrame ? currentFrame.canvas : layer.imageData
+  }
+  
+  // 通常の画像レイヤー
+  return layer.imageData
+}
+
+/**
+ * 画像ソースのサイズを取得
+ */
+const getImageSize = (imageSource: CanvasImageSource): { width: number; height: number } => {
+  if (imageSource instanceof HTMLImageElement) {
+    return {
+      width: imageSource.naturalWidth,
+      height: imageSource.naturalHeight
+    }
+  } else if (imageSource instanceof HTMLCanvasElement) {
+    return {
+      width: imageSource.width,
+      height: imageSource.height
+    }
+  }
+  
+  // デフォルトサイズ
+  return { width: 0, height: 0 }
+}
+
+/**
  * 単一レイヤーを統合描画（枠外・枠内を一度の処理で）
  */
 const drawLayerOptimized = (
@@ -73,10 +109,14 @@ const drawLayerOptimized = (
   params: LayerDrawParams
 ): void => {
   const { layer, outputX, outputY, outputWidth, outputHeight } = params
-  if (!layer.imageData) return
+  
+  // 描画用の画像ソースを取得
+  const imageSource = getImageSource(layer)
+  if (!imageSource) return
 
-  const scaledWidth = layer.imageData.naturalWidth * layer.scale
-  const scaledHeight = layer.imageData.naturalHeight * layer.scale
+  const { width, height } = getImageSize(imageSource)
+  const scaledWidth = width * layer.scale
+  const scaledHeight = height * layer.scale
   const x = layer.position.x - scaledWidth / 2
   const y = layer.position.y - scaledHeight / 2
 
@@ -88,7 +128,7 @@ const drawLayerOptimized = (
 
   // 枠外部分を半透明で描画
   ctx.globalAlpha = layer.opacity * CANVAS_CONSTANTS.OPACITY.OUTSIDE_FRAME
-  ctx.drawImage(layer.imageData, x, y, scaledWidth, scaledHeight)
+  ctx.drawImage(imageSource, x, y, scaledWidth, scaledHeight)
 
   // 枠内部分を不透明で描画（クリッピングを使用）
   ctx.beginPath()
@@ -96,7 +136,7 @@ const drawLayerOptimized = (
   ctx.clip()
   
   ctx.globalAlpha = layer.opacity
-  ctx.drawImage(layer.imageData, x, y, scaledWidth, scaledHeight)
+  ctx.drawImage(imageSource, x, y, scaledWidth, scaledHeight)
 
   // 1回の restore でまとめて復元
   ctx.restore()

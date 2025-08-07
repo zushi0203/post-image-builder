@@ -10,6 +10,8 @@ export const CanvasPreview: React.FC<CanvasPreviewProps> = ({
   layers,
   canvasSettings,
   onLayerPositionChange,
+  isAnimationEnabled = false,
+  onFrameUpdate,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
@@ -53,7 +55,9 @@ export const CanvasPreview: React.FC<CanvasPreviewProps> = ({
     displayLayers, 
     canvasSettings, 
     displaySelectedLayer, 
-    isDragging
+    isDragging,
+    isAnimationEnabled,
+    onFrameUpdate
   )
 
   // マウスイベントハンドラー

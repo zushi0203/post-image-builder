@@ -7,7 +7,9 @@ import {
   canvasSettingsAtom,
   hasGifLayersAtom,
   timelineLayersAtom,
-  setLayerFrameAtom
+  setLayerFrameAtom,
+  animationSettingsAtom,
+  toggleAnimationAtom
 } from '../../store/atoms'
 import { useFileHandler } from '../../hooks/useFileHandler'
 import { useLayerManager } from '../../hooks/useLayerManager'
@@ -18,10 +20,11 @@ const MainPage = () => {
   const [isGenerating, setIsGenerating] = useAtom(isGeneratingAtom)
   const [canvasSettings] = useAtom(canvasSettingsAtom)
   const [, setLayerFrame] = useAtom(setLayerFrameAtom)
+  const [, toggleAnimation] = useAtom(toggleAnimationAtom)
 
   const hasGifLayers = useAtomValue(hasGifLayersAtom)
-  console.log('hasGifLayers:', hasGifLayers)
   const timelineLayers = useAtomValue(timelineLayersAtom)
+  const animationSettings = useAtomValue(animationSettingsAtom)
 
   const { handleFiles } = useFileHandler()
   const {
@@ -43,6 +46,11 @@ const MainPage = () => {
   const handleFrameSelect = (layerId: string, frameIndex: number) => {
     setLayerFrame(layerId, frameIndex)
   }
+
+  const handleFrameUpdate = React.useCallback((layerId: string, frameIndex: number) => {
+    // アニメーション再生中のフレーム自動更新
+    setLayerFrame(layerId, frameIndex)
+  }, [setLayerFrame])
 
   const handleGenerateImage = async () => {
     setIsGenerating(true)
@@ -103,6 +111,8 @@ const MainPage = () => {
                       layers={layers}
                       canvasSettings={canvasSettings}
                       onLayerPositionChange={handleLayerPositionChange}
+                      isAnimationEnabled={animationSettings.isPlaying}
+                      onFrameUpdate={handleFrameUpdate}
                     />
                   </div>
                   <div className="drop-overlay">
@@ -137,6 +147,25 @@ const MainPage = () => {
         {/* 右サイドバー: 設定パネル */}
         <aside className="right-sidebar">
           <section className="settings-panel">
+            {/* GIFアニメーション制御 */}
+            {hasGifLayers && (
+              <div className="setting-group">
+                <h3>GIFアニメーション</h3>
+                <Button
+                  variant={animationSettings.isPlaying ? "danger" : "primary"}
+                  size="medium"
+                  onPress={toggleAnimation}
+                >
+                  {animationSettings.isPlaying ? '⏸️ 停止' : '▶️ 再生'}
+                </Button>
+                <div className="animation-info">
+                  <p>フレームレート: 30FPS固定</p>
+                  <p>速度: {animationSettings.playbackSpeed}x</p>
+                  <p>ループ: {animationSettings.loop ? 'ON' : 'OFF'}</p>
+                </div>
+              </div>
+            )}
+
             <div className="setting-group">
               <h3>ここで拡大率を選択</h3>
               {/* 拡大率設定コントロール */}

@@ -1,3 +1,39 @@
+export interface GifFrame {
+  /** フレームの一意ID */
+  id: string
+  /** フレーム画像データ（Canvas要素） */
+  canvas: HTMLCanvasElement
+  /** フレーム画像データ（ImageData） */
+  imageData: ImageData
+  /** フレーム表示時間（ミリ秒） */
+  delay: number
+  /** フレーム幅 */
+  width: number
+  /** フレーム高さ */
+  height: number
+  /** フレーム位置 X座標 */
+  left: number
+  /** フレーム位置 Y座標 */
+  top: number
+  /** 透明色インデックス */
+  transparentIndex?: number
+  /** 廃棄方法 */
+  disposalMethod: number
+}
+
+export interface GifInfo {
+  /** 全フレーム配列 */
+  frames: GifFrame[]
+  /** GIF全体の幅 */
+  width: number
+  /** GIF全体の高さ */
+  height: number
+  /** ループ回数（0は無限ループ） */
+  loopCount: number
+  /** 総再生時間（ミリ秒） */
+  totalDuration: number
+}
+
 export interface ImageLayer {
   id: string
   name: string
@@ -13,14 +49,8 @@ export interface ImageLayer {
   scale: number
   opacity: number
   rotation: number
-  // GIF用フレーム情報
-  frames?: Array<{
-    id: string
-    imageData: HTMLImageElement
-    delay: number
-    width: number
-    height: number
-  }>
+  // GIF用情報
+  gifInfo?: GifInfo
   currentFrameIndex?: number
 }
 
@@ -36,6 +66,10 @@ export interface CanvasPreviewProps {
   layers: ImageLayer[]
   canvasSettings: CanvasSettings
   onLayerPositionChange?: (layerId: string, position: { x: number; y: number }) => void
+  /** GIFアニメーション再生を有効にするかどうか */
+  isAnimationEnabled?: boolean
+  /** フレーム更新時のコールバック */
+  onFrameUpdate?: (layerId: string, frameIndex: number) => void
 }
 
 export interface CanvasCoordinates {

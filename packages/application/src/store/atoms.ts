@@ -175,3 +175,45 @@ export const setLayerFrameAtom = atom(
     ))
   }
 )
+
+// GIFアニメーション制御
+export interface AnimationSettings {
+  /** アニメーション再生中かどうか */
+  isPlaying: boolean
+  /** 再生速度倍率（1.0が標準速度） */
+  playbackSpeed: number
+  /** ループ再生するかどうか */
+  loop: boolean
+}
+
+export const animationSettingsAtom = atom<AnimationSettings>({
+  isPlaying: false,
+  playbackSpeed: 1.0,
+  loop: true,
+})
+
+// アニメーション制御アクション
+export const toggleAnimationAtom = atom(
+  null,
+  (get, set) => {
+    const settings = get(animationSettingsAtom)
+    set(animationSettingsAtom, { ...settings, isPlaying: !settings.isPlaying })
+  }
+)
+
+export const setAnimationPlaybackSpeedAtom = atom(
+  null,
+  (get, set, speed: number) => {
+    const settings = get(animationSettingsAtom)
+    const validSpeed = Math.max(0.1, Math.min(5.0, speed)) // 0.1x - 5.0x に制限
+    set(animationSettingsAtom, { ...settings, playbackSpeed: validSpeed })
+  }
+)
+
+export const setAnimationLoopAtom = atom(
+  null,
+  (get, set, loop: boolean) => {
+    const settings = get(animationSettingsAtom)
+    set(animationSettingsAtom, { ...settings, loop })
+  }
+)
