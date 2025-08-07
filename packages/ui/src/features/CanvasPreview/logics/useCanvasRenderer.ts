@@ -1,4 +1,4 @@
-import { useCallback, useLayoutEffect } from 'react'
+import { useCallback, useLayoutEffect, useEffect } from 'react'
 import type { ImageLayer, CanvasSettings } from '../defs/CanvasPreviewTypes'
 import { 
   initializeCanvas, 
@@ -7,17 +7,21 @@ import {
   drawOutputFrame, 
   drawSelectionBox 
 } from './canvasDrawer'
+import { useAnimationFrame } from './useAnimationFrame'
 
 /**
  * キャンバス描画を管理するカスタムフック
- * useLayoutEffectを使用して描画の同期実行を保証
+ * requestAnimationFrameで描画頻度を制御し、パフォーマンスを最適化
  */
 export const useCanvasRenderer = (
   canvasRef: React.RefObject<HTMLCanvasElement>,
   layers: ImageLayer[],
   canvasSettings: CanvasSettings,
-  selectedLayer: ImageLayer | null
+  selectedLayer: ImageLayer | null,
+  isDragging: boolean = false
 ) => {
+  const { requestFrame, cancelFrame } = useAnimationFrame()
+
   /**
    * キャンバスの再描画処理
    */
@@ -44,14 +48,41 @@ export const useCanvasRenderer = (
   }, [canvasRef, layers, canvasSettings, selectedLayer])
 
   /**
-   * 依存値の変更時に自動再描画
-   * useLayoutEffectで同期実行を保証
+   * アニメーションフレームでスケジューリングされた再描画
+   */
+  const scheduleRedraw = useCallback(() => {
+    requestFrame(redrawCanvas)
+  }, [requestFrame, redrawCanvas])
+
+  /**
+   * 初回描画とドラッグ終了時の即座再描画
    */
   useLayoutEffect(() => {
-    redrawCanvas()
-  }, [redrawCanvas])
+    if (!isDragging) {
+      redrawCanvas()
+    }
+  }, [redrawCanvas, isDragging])
+
+  /**
+   * ドラッグ中の最適化された再描画
+   */
+  useEffect(() => {
+    if (isDragging) {
+      scheduleRedraw()
+    }
+  }, [scheduleRedraw, isDragging, layers, selectedLayer])
+
+  /**
+   * クリーンアップ
+   */
+  useEffect(() => {
+    return () => {
+      cancelFrame()
+    }
+  }, [cancelFrame])
 
   return {
     redrawCanvas,
+    scheduleRedraw,
   }
 }

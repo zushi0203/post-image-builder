@@ -36,9 +36,9 @@ const MainPage = () => {
     handleFiles(files)
   }
 
-  const handleLayerPositionChange = (layerId: string, position: { x: number; y: number }) => {
+  const handleLayerPositionChange = React.useCallback((layerId: string, position: { x: number; y: number }) => {
     updateLayerProperty(layerId, 'position', position)
-  }
+  }, [updateLayerProperty])
 
   const handleFrameSelect = (layerId: string, frameIndex: number) => {
     setLayerFrame(layerId, frameIndex)
@@ -57,14 +57,14 @@ const MainPage = () => {
     }
   }
 
-  // UIコンポーネント用のレイヤーデータに変換
-  const uiLayers = layers.map(layer => ({
+  // UIコンポーネント用のレイヤーデータに変換（メモ化）
+  const uiLayers = React.useMemo(() => layers.map(layer => ({
     id: layer.id,
     name: layer.name,
     type: layer.type,
     visible: layer.visible,
     zIndex: layer.zIndex,
-  }))
+  })), [layers])
 
   return (
     <div className="main-page">

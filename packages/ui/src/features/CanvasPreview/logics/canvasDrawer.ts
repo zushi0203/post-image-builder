@@ -1,8 +1,7 @@
 import type { 
   ImageLayer, 
   CanvasSettings, 
-  LayerDrawParams,
-  CanvasCoordinates
+  LayerDrawParams
 } from '../defs/CanvasPreviewTypes'
 import { CANVAS_CONSTANTS } from '../defs/canvasPreviewConstants'
 
@@ -51,43 +50,25 @@ export const calculateOutputBounds = (canvas: HTMLCanvasElement) => {
 }
 
 /**
- * 単一レイヤーを描画（枠外部分：半透明）
+ * 効率的な回転変換の適用
  */
-const drawLayerOutside = (
+const applyRotationTransform = (
   ctx: CanvasRenderingContext2D,
   layer: ImageLayer
-): void => {
-  if (!layer.imageData) return
+): boolean => {
+  if (layer.rotation === 0) return false
 
-  const scaledWidth = layer.imageData.naturalWidth * layer.scale
-  const scaledHeight = layer.imageData.naturalHeight * layer.scale
-  const x = layer.position.x - scaledWidth / 2
-  const y = layer.position.y - scaledHeight / 2
-
-  ctx.save()
-  ctx.globalAlpha = layer.opacity * CANVAS_CONSTANTS.OPACITY.OUTSIDE_FRAME
-
-  if (layer.rotation !== 0) {
-    ctx.translate(layer.position.x, layer.position.y)
-    ctx.rotate((layer.rotation * Math.PI) / 180)
-    ctx.translate(-layer.position.x, -layer.position.y)
-  }
-
-  ctx.drawImage(
-    layer.imageData,
-    x,
-    y,
-    scaledWidth,
-    scaledHeight
-  )
-
-  ctx.restore()
+  const radians = (layer.rotation * Math.PI) / 180
+  ctx.translate(layer.position.x, layer.position.y)
+  ctx.rotate(radians)
+  ctx.translate(-layer.position.x, -layer.position.y)
+  return true
 }
 
 /**
- * 単一レイヤーを描画（枠内部分：クリッピング適用）
+ * 単一レイヤーを統合描画（枠外・枠内を一度の処理で）
  */
-const drawLayerInside = (
+const drawLayerOptimized = (
   ctx: CanvasRenderingContext2D,
   params: LayerDrawParams
 ): void => {
@@ -99,34 +80,30 @@ const drawLayerInside = (
   const x = layer.position.x - scaledWidth / 2
   const y = layer.position.y - scaledHeight / 2
 
+  // 1回の save でまとめて処理
   ctx.save()
 
-  // 出力範囲でクリッピング
+  // 回転変換を適用（必要時のみ）
+  applyRotationTransform(ctx, layer)
+
+  // 枠外部分を半透明で描画
+  ctx.globalAlpha = layer.opacity * CANVAS_CONSTANTS.OPACITY.OUTSIDE_FRAME
+  ctx.drawImage(layer.imageData, x, y, scaledWidth, scaledHeight)
+
+  // 枠内部分を不透明で描画（クリッピングを使用）
   ctx.beginPath()
   ctx.rect(outputX, outputY, outputWidth, outputHeight)
   ctx.clip()
-
+  
   ctx.globalAlpha = layer.opacity
+  ctx.drawImage(layer.imageData, x, y, scaledWidth, scaledHeight)
 
-  if (layer.rotation !== 0) {
-    ctx.translate(layer.position.x, layer.position.y)
-    ctx.rotate((layer.rotation * Math.PI) / 180)
-    ctx.translate(-layer.position.x, -layer.position.y)
-  }
-
-  ctx.drawImage(
-    layer.imageData,
-    x,
-    y,
-    scaledWidth,
-    scaledHeight
-  )
-
+  // 1回の restore でまとめて復元
   ctx.restore()
 }
 
 /**
- * 全レイヤーを描画
+ * 全レイヤーを最適化描画
  */
 export const drawLayers = (
   ctx: CanvasRenderingContext2D,
@@ -138,19 +115,16 @@ export const drawLayers = (
     outputHeight: number
   }
 ): void => {
-  // レイヤーをzIndexの順序で描画
+  // レイヤーをzIndexの順序でソート（1回のみ）
   const visibleLayers = layers
-    .filter(layer => layer.visible)
+    .filter(layer => layer.visible && layer.imageData)
     .sort((a, b) => a.zIndex - b.zIndex)
 
   const { outputX, outputY, outputWidth, outputHeight } = outputBounds
 
+  // 統合描画で各レイヤーを処理
   visibleLayers.forEach(layer => {
-    // 1. 枠外部分を半透明で描画
-    drawLayerOutside(ctx, layer)
-
-    // 2. 枠内部分を不透明で描画
-    drawLayerInside(ctx, {
+    drawLayerOptimized(ctx, {
       layer,
       outputX,
       outputY,
@@ -161,7 +135,7 @@ export const drawLayers = (
 }
 
 /**
- * 出力サイズの枠線とラベルを描画
+ * 出力サイズの枠線とラベルを最適化描画
  */
 export const drawOutputFrame = (
   ctx: CanvasRenderingContext2D,
@@ -175,15 +149,17 @@ export const drawOutputFrame = (
   const { outputX, outputY, outputWidth, outputHeight } = outputBounds
   const { OUTPUT_FRAME, LABEL } = CANVAS_CONSTANTS.STYLES
 
+  // 一度のsave/restoreで枠線とラベルを描画
   ctx.save()
   
-  // 枠線を描画
+  // 枠線描画
   ctx.strokeStyle = OUTPUT_FRAME.STROKE_COLOR
   ctx.lineWidth = OUTPUT_FRAME.LINE_WIDTH
   ctx.setLineDash(OUTPUT_FRAME.LINE_DASH)
   ctx.strokeRect(outputX, outputY, outputWidth, outputHeight)
   
-  // ラベルを描画
+  // ラベル描画（setLineDashをリセット）
+  ctx.setLineDash([])
   ctx.fillStyle = LABEL.COLOR
   ctx.font = LABEL.FONT
   ctx.textAlign = 'left'
@@ -197,7 +173,7 @@ export const drawOutputFrame = (
 }
 
 /**
- * 選択されたレイヤーのバウンディングボックスを描画
+ * 選択されたレイヤーのバウンディングボックスを最適化描画
  */
 export const drawSelectionBox = (
   ctx: CanvasRenderingContext2D,
@@ -211,28 +187,25 @@ export const drawSelectionBox = (
   const y = selectedLayer.position.y - scaledHeight / 2
 
   const { SELECTION_BOX } = CANVAS_CONSTANTS.STYLES
+  const handleSize = SELECTION_BOX.HANDLE_SIZE
 
   ctx.save()
   
-  // バウンディングボックスを描画
+  // バウンディングボックスとハンドルを一度に描画
   ctx.strokeStyle = SELECTION_BOX.STROKE_COLOR
+  ctx.fillStyle = SELECTION_BOX.STROKE_COLOR
   ctx.lineWidth = SELECTION_BOX.LINE_WIDTH
   ctx.setLineDash(SELECTION_BOX.LINE_DASH)
+  
+  // バウンディングボックス
   ctx.strokeRect(x, y, scaledWidth, scaledHeight)
-
-  // コーナーハンドルを描画
-  const handleSize = SELECTION_BOX.HANDLE_SIZE
-  const handles: CanvasCoordinates[] = [
-    { x: x - handleSize/2, y: y - handleSize/2 }, // 左上
-    { x: x + scaledWidth - handleSize/2, y: y - handleSize/2 }, // 右上
-    { x: x - handleSize/2, y: y + scaledHeight - handleSize/2 }, // 左下
-    { x: x + scaledWidth - handleSize/2, y: y + scaledHeight - handleSize/2 }, // 右下
-  ]
-
-  ctx.fillStyle = SELECTION_BOX.STROKE_COLOR
-  handles.forEach(handle => {
-    ctx.fillRect(handle.x, handle.y, handleSize, handleSize)
-  })
+  
+  // コーナーハンドル（4つまとめて描画）
+  ctx.setLineDash([]) // ハンドルは実線
+  ctx.fillRect(x - handleSize/2, y - handleSize/2, handleSize, handleSize) // 左上
+  ctx.fillRect(x + scaledWidth - handleSize/2, y - handleSize/2, handleSize, handleSize) // 右上
+  ctx.fillRect(x - handleSize/2, y + scaledHeight - handleSize/2, handleSize, handleSize) // 左下
+  ctx.fillRect(x + scaledWidth - handleSize/2, y + scaledHeight - handleSize/2, handleSize, handleSize) // 右下
 
   ctx.restore()
 }

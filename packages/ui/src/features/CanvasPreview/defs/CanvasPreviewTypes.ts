@@ -49,6 +49,11 @@ export interface DragState {
   dragOffset: CanvasCoordinates
 }
 
+export interface OptimisticLayerState {
+  layerId: string
+  tempPosition: CanvasCoordinates
+}
+
 export interface DrawingContext {
   canvas: HTMLCanvasElement
   ctx: CanvasRenderingContext2D
