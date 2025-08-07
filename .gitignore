@@ -140,5 +140,7 @@ vite.config.ts.timestamp-*
 
 .vscode
 .claude
+.serena
+
 # 実装のラフ画像を置いておくフォルダ
 .scrap
