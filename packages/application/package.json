@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@post-image-builder/ui": "*",
+    "gif.js": "^0.2.0",
     "gifuct-js": "^2.1.2",
     "jotai": "^2.6.0",
     "react": "^18.2.0",

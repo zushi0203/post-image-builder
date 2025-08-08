@@ -13,6 +13,7 @@ import {
 } from '../../store/atoms'
 import { useFileHandler } from '../../hooks/useFileHandler'
 import { useLayerManager } from '../../hooks/useLayerManager'
+import { exportLayersToGif, downloadGif, type GifExportProgress } from '../../utils/gifExporter'
 import './MainPage.css'
 
 const MainPage = () => {
@@ -21,6 +22,10 @@ const MainPage = () => {
   const [canvasSettings] = useAtom(canvasSettingsAtom)
   const [, setLayerFrame] = useAtom(setLayerFrameAtom)
   const [, toggleAnimation] = useAtom(toggleAnimationAtom)
+
+  // GIF生成状態の管理
+  const [isExportingGif, setIsExportingGif] = React.useState(false)
+  const [exportProgress, setExportProgress] = React.useState<GifExportProgress | null>(null)
 
   const hasGifLayers = useAtomValue(hasGifLayersAtom)
   const timelineLayers = useAtomValue(timelineLayersAtom)
@@ -62,6 +67,40 @@ const MainPage = () => {
       console.error('Failed to generate image:', error)
     } finally {
       setIsGenerating(false)
+    }
+  }
+
+  const handleExportGif = async () => {
+    if (layers.length === 0) return
+
+    setIsExportingGif(true)
+    setExportProgress({ current: 0, total: 100, phase: 'analyzing' })
+
+    try {
+      const blob = await exportLayersToGif(
+        layers,
+        canvasSettings,
+        {
+          quality: 10,
+          workers: 2,
+          workerScript: '/gif.worker.js'
+        },
+        (progress) => {
+          setExportProgress(progress)
+        }
+      )
+
+      // GIFをダウンロード
+      const filename = `animation_${Date.now()}.gif`
+      downloadGif(blob, filename)
+
+      console.log('🎉 GIF export completed successfully')
+    } catch (error) {
+      console.error('❌ GIF export failed:', error)
+      alert('GIF生成に失敗しました。コンソールでエラーを確認してください。')
+    } finally {
+      setIsExportingGif(false)
+      setExportProgress(null)
     }
   }
 
@@ -192,14 +231,51 @@ const MainPage = () => {
               </ul>
             </div>
 
-            <Button
-              variant="success"
-              size="large"
-              onPress={handleGenerateImage}
-              isDisabled={isGenerating}
-            >
-              {isGenerating ? '生成中...' : '画像を生成'}
-            </Button>
+            <div className="generation-buttons">
+              <Button
+                variant="success"
+                size="large"
+                onPress={handleGenerateImage}
+                isDisabled={isGenerating}
+              >
+                {isGenerating ? '生成中...' : '画像を生成'}
+              </Button>
+
+              {/* GIF生成ボタン */}
+              <Button
+                variant="primary"
+                size="large"
+                onPress={handleExportGif}
+                isDisabled={isExportingGif || layers.length === 0}
+              >
+                {isExportingGif ? (
+                  exportProgress ? (
+                    `GIF生成中... ${Math.round(exportProgress.current)}%`
+                  ) : (
+                    'GIF生成中...'
+                  )
+                ) : (
+                  '🎬 GIF生成'
+                )}
+              </Button>
+
+              {/* 進捗表示 */}
+              {exportProgress && (
+                <div className="export-progress">
+                  <div className="progress-bar">
+                    <div 
+                      className="progress-fill" 
+                      style={{ width: `${exportProgress.current}%` }}
+                    />
+                  </div>
+                  <div className="progress-text">
+                    {exportProgress.phase === 'analyzing' && 'フレーム解析中...'}
+                    {exportProgress.phase === 'rendering' && 'フレーム描画中...'}
+                    {exportProgress.phase === 'encoding' && 'GIFエンコード中...'}
+                  </div>
+                </div>
+              )}
+            </div>
           </section>
         </aside>
       </main>
