@@ -100,6 +100,25 @@ const getImageSize = (imageSource: CanvasImageSource): { width: number; height: 
   // デフォルトサイズ
   return { width: 0, height: 0 }
 }
+/**
+ * GIFレイヤーの場合は全体サイズ、通常画像は個別サイズを取得
+ * sandboxの実装に合わせ、GIFの統一サイズを使用する
+ */
+const getGifCanvasSize = (layer: ImageLayer): { width: number; height: number } => {
+  // GIFレイヤーの場合はGIF全体のサイズを使用
+  if (layer.type === 'gif' && layer.gifInfo) {
+    return {
+      width: layer.gifInfo.width,
+      height: layer.gifInfo.height
+    }
+  }
+  
+  // 通常の画像レイヤーは個別サイズを使用
+  const imageSource = getImageSource(layer)
+  if (!imageSource) return { width: 0, height: 0 }
+  
+  return getImageSize(imageSource)
+}
 
 /**
  * 単一レイヤーを統合描画（枠外・枠内を一度の処理で）
@@ -114,11 +133,38 @@ const drawLayerOptimized = (
   const imageSource = getImageSource(layer)
   if (!imageSource) return
 
+  // 実際の画像サイズを取得（sandboxと同じ：個別フレームサイズを使用）
   const { width, height } = getImageSize(imageSource)
   const scaledWidth = width * layer.scale
   const scaledHeight = height * layer.scale
-  const x = layer.position.x - scaledWidth / 2
-  const y = layer.position.y - scaledHeight / 2
+  
+  // GIFフレームの場合、フレーム位置オフセットを適用
+  let offsetX = 0
+  let offsetY = 0
+  
+  if (layer.type === 'gif' && layer.gifInfo && layer.gifInfo.frames.length > 0) {
+    const frameIndex = layer.currentFrameIndex || 0
+    const validIndex = Math.max(0, Math.min(frameIndex, layer.gifInfo.frames.length - 1))
+    const currentFrame = layer.gifInfo.frames[validIndex]
+    
+    if (currentFrame) {
+      // GIF全体サイズとフレームサイズの差を計算
+      const gifWidth = layer.gifInfo.width * layer.scale
+      const gifHeight = layer.gifInfo.height * layer.scale
+      
+      // GIF全体を基準とした中央配置の起点
+      const gifX = layer.position.x - gifWidth / 2
+      const gifY = layer.position.y - gifHeight / 2
+      
+      // フレームのオフセット位置（スケール適用）
+      offsetX = gifX + (currentFrame.left * layer.scale)
+      offsetY = gifY + (currentFrame.top * layer.scale)
+    }
+  }
+  
+  // 最終的な描画位置
+  const x = layer.type === 'gif' ? offsetX : layer.position.x - scaledWidth / 2
+  const y = layer.type === 'gif' ? offsetY : layer.position.y - scaledHeight / 2
 
   // 1回の save でまとめて処理
   ctx.save()
@@ -221,10 +267,42 @@ export const drawSelectionBox = (
 ): void => {
   if (!selectedLayer.imageData || !selectedLayer.visible) return
 
-  const scaledWidth = selectedLayer.imageData.naturalWidth * selectedLayer.scale
-  const scaledHeight = selectedLayer.imageData.naturalHeight * selectedLayer.scale
-  const x = selectedLayer.position.x - scaledWidth / 2
-  const y = selectedLayer.position.y - scaledHeight / 2
+  // 描画用の画像ソースを取得
+  const imageSource = getImageSource(selectedLayer)
+  if (!imageSource) return
+
+  // 実際の画像サイズを取得（drawLayerOptimizedと同じ基準）
+  const { width, height } = getImageSize(imageSource)
+  const scaledWidth = width * selectedLayer.scale
+  const scaledHeight = height * selectedLayer.scale
+  
+  // GIFフレームの場合、フレーム位置オフセットを適用
+  let offsetX = 0
+  let offsetY = 0
+  
+  if (selectedLayer.type === 'gif' && selectedLayer.gifInfo && selectedLayer.gifInfo.frames.length > 0) {
+    const frameIndex = selectedLayer.currentFrameIndex || 0
+    const validIndex = Math.max(0, Math.min(frameIndex, selectedLayer.gifInfo.frames.length - 1))
+    const currentFrame = selectedLayer.gifInfo.frames[validIndex]
+    
+    if (currentFrame) {
+      // GIF全体サイズとフレームサイズの差を計算
+      const gifWidth = selectedLayer.gifInfo.width * selectedLayer.scale
+      const gifHeight = selectedLayer.gifInfo.height * selectedLayer.scale
+      
+      // GIF全体を基準とした中央配置の起点
+      const gifX = selectedLayer.position.x - gifWidth / 2
+      const gifY = selectedLayer.position.y - gifHeight / 2
+      
+      // フレームのオフセット位置（スケール適用）
+      offsetX = gifX + (currentFrame.left * selectedLayer.scale)
+      offsetY = gifY + (currentFrame.top * selectedLayer.scale)
+    }
+  }
+  
+  // 最終的なバウンディングボックス位置
+  const x = selectedLayer.type === 'gif' ? offsetX : selectedLayer.position.x - scaledWidth / 2
+  const y = selectedLayer.type === 'gif' ? offsetY : selectedLayer.position.y - scaledHeight / 2
 
   const { SELECTION_BOX } = CANVAS_CONSTANTS.STYLES
   const handleSize = SELECTION_BOX.HANDLE_SIZE
