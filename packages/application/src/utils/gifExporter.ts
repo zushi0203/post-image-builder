@@ -6,6 +6,7 @@ export interface GifExportOptions {
   quality?: number
   workers?: number
   workerScript?: string
+  fps?: number // デフォルト29.97fps
 }
 
 export interface GifExportProgress {
@@ -80,18 +81,8 @@ const getLayerStateAtFrame = (layer: ImageLayer, frameIndex: number): ImageLayer
  * フレームの遅延時間を取得
  */
 const getFrameDelay = (layers: ImageLayer[], frameIndex: number): number => {
-  const gifLayers = layers.filter(layer => layer.type === 'gif' && layer.gifInfo)
-  if (gifLayers.length === 0) return 1000
-
-  const delays = gifLayers.map(layer => {
-    const frames = layer.gifInfo!.frames
-    if (frames.length === 0) return 1000
-    
-    const currentFrame = frames[frameIndex % frames.length]
-    return currentFrame.delay
-  })
-
-  return Math.min(...delays)
+  // 29.97fps固定で統一（NTSC規格準拠）
+  return Math.round(1000 / 29.97) // 約33ms
 }
 
 /**
@@ -107,10 +98,7 @@ const drawLayerToCanvas = (
   if (!layer.visible) return
 
   const imageSource = getImageSource(layer)
-  console.log(`🔍 Layer "${layer.name}": imageSource exists: ${!!imageSource}, visible: ${layer.visible}`)
-  
   if (!imageSource) {
-    console.log(`❌ No image source for layer "${layer.name}"`)
     return
   }
 
@@ -118,7 +106,7 @@ const drawLayerToCanvas = (
   const scaledWidth = width * layer.scale
   const scaledHeight = height * layer.scale
   
-  console.log(`📏 Layer "${layer.name}" size: ${width}x${height} -> ${scaledWidth}x${scaledHeight} (scale: ${layer.scale})`)
+
 
   // 一時canvasの中央を基準とした座標に変換
   const tempCenterX = tempCanvasWidth / 2
@@ -159,7 +147,7 @@ const drawLayerToCanvas = (
   const x = layer.type === 'gif' ? offsetX : tempCenterX + relativeX - scaledWidth / 2
   const y = layer.type === 'gif' ? offsetY : tempCenterY + relativeY - scaledHeight / 2
   
-  console.log(`📍 Layer "${layer.name}" final position: (${x}, ${y}), tempCenter: (${tempCenterX}, ${tempCenterY}), layerPos: (${layer.position.x}, ${layer.position.y})`)
+
 
   ctx.save()
   
@@ -187,7 +175,7 @@ const renderOutputFrame = (
   canvasSettings: CanvasSettings,
   frameIndex: number
 ): HTMLCanvasElement => {
-  console.log(`🎬 Rendering frame ${frameIndex}, layers count: ${layers.length}`)
+
   
   // 出力サイズは固定500x500px
   const OUTPUT_WIDTH = 500
@@ -204,7 +192,7 @@ const renderOutputFrame = (
   if (canvasSettings.backgroundColor) {
     outputCtx.fillStyle = canvasSettings.backgroundColor
     outputCtx.fillRect(0, 0, OUTPUT_WIDTH, OUTPUT_HEIGHT)
-    console.log(`🎨 Background color set: ${canvasSettings.backgroundColor}`)
+
   }
 
   // 大きめの一時Canvasを作成（レイヤー描画用）
@@ -214,7 +202,7 @@ const renderOutputFrame = (
   tempCanvas.width = tempWidth
   tempCanvas.height = tempHeight
 
-  console.log(`📐 Temp canvas size: ${tempWidth}x${tempHeight}`)
+
 
   const tempCtx = tempCanvas.getContext('2d')
   if (!tempCtx) throw new Error('Failed to create temp canvas context')
@@ -228,18 +216,14 @@ const renderOutputFrame = (
 
   // フレーム時点でのレイヤー状態を取得
   const frameLayerStates = layers.map(layer => getLayerStateAtFrame(layer, frameIndex))
-  console.log(`🔄 Frame layer states created, count: ${frameLayerStates.length}`)
+
 
   // レイヤーをzIndexの順序でソートして描画
   const visibleLayers = frameLayerStates
     .filter(layer => layer.visible && layer.imageData)
     .sort((a, b) => a.zIndex - b.zIndex)
 
-  console.log(`👁️ Visible layers: ${visibleLayers.length}/${frameLayerStates.length}`)
-  
-  visibleLayers.forEach((layer, index) => {
-    console.log(`🖼️ Drawing layer ${index}: ${layer.name}, position: (${layer.position.x}, ${layer.position.y}), scale: ${layer.scale}`)
-  })
+
 
   // 各レイヤーを描画
   visibleLayers.forEach(layer => {
@@ -252,7 +236,7 @@ const renderOutputFrame = (
   const extractX = centerX - OUTPUT_WIDTH / 2
   const extractY = centerY - OUTPUT_HEIGHT / 2
 
-  console.log(`✂️ Extracting from temp canvas: (${extractX}, ${extractY}) -> (${extractX + OUTPUT_WIDTH}, ${extractY + OUTPUT_HEIGHT})`)
+
 
   // 中央500x500px領域を出力Canvasにコピー
   outputCtx.drawImage(
@@ -261,7 +245,7 @@ const renderOutputFrame = (
     0, 0, OUTPUT_WIDTH, OUTPUT_HEIGHT
   )
 
-  console.log(`✅ Frame ${frameIndex} rendering completed`)
+
   return outputCanvas
 }
 

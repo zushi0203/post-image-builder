@@ -4,8 +4,7 @@ import type { ImageLayer } from '../defs/CanvasPreviewTypes'
 /**
  * アニメーション設定定数
  */
-const TARGET_FPS = 30
-const FRAME_INTERVAL = 1000 / TARGET_FPS // 33.33ms
+const DEFAULT_TARGET_FPS = 29.97
 
 /**
  * GIF正規化情報
@@ -13,7 +12,7 @@ const FRAME_INTERVAL = 1000 / TARGET_FPS // 33.33ms
 interface NormalizedGifInfo {
   /** 元GIFの総再生時間（ミリ秒） */
   totalDuration: number
-  /** 30FPSでの総フレーム数 */
+  /** 指定FPSでの総フレーム数 */
   normalizedFrameCount: number
   /** 元フレーム数 */
   originalFrameCount: number
@@ -58,9 +57,9 @@ export interface AnimationControl {
 }
 
 /**
- * GIF情報を30FPS用に正規化
+ * GIF情報を指定FPS用に正規化
  */
-const normalizeGifInfo = (layer: ImageLayer): NormalizedGifInfo | null => {
+const normalizeGifInfo = (layer: ImageLayer, targetFps: number = DEFAULT_TARGET_FPS): NormalizedGifInfo | null => {
   if (!layer.gifInfo || layer.gifInfo.frames.length === 0) return null
 
   const { frames } = layer.gifInfo
@@ -68,8 +67,9 @@ const normalizeGifInfo = (layer: ImageLayer): NormalizedGifInfo | null => {
   // 元GIFの総再生時間を計算
   const totalDuration = frames.reduce((sum, frame) => sum + frame.delay, 0)
   
-  // 30FPSでの総フレーム数を計算
-  const normalizedFrameCount = Math.ceil(totalDuration / FRAME_INTERVAL)
+  // 指定FPSでの総フレーム数を計算
+  const frameInterval = 1000 / targetFps
+  const normalizedFrameCount = Math.ceil(totalDuration / frameInterval)
   
   // フレームスキップ比率を計算
   const frameSkipRatio = frames.length / Math.max(normalizedFrameCount, 1)
@@ -98,6 +98,7 @@ const calculateOriginalFrameIndex = (
  */
 export const useGifAnimation = (
   layers: ImageLayer[],
+  fps: number = DEFAULT_TARGET_FPS,
   onFrameUpdate?: (layerId: string, frameIndex: number) => void
 ): AnimationControl => {
   // 各レイヤーのアニメーション状態を保持
@@ -113,7 +114,7 @@ export const useGifAnimation = (
    * アニメーション状態を初期化
    */
   const initializeAnimationState = useCallback((layer: ImageLayer): GifAnimationState => {
-    const normalizedInfo = normalizeGifInfo(layer)
+    const normalizedInfo = normalizeGifInfo(layer, fps)
     
     return {
       isPlaying: false,
@@ -122,7 +123,7 @@ export const useGifAnimation = (
       playbackSpeed: 1.0,
       normalizedInfo,
     }
-  }, [])
+  }, [fps])
 
   /**
    * 特定レイヤーのアニメーション状態を取得
@@ -132,9 +133,10 @@ export const useGifAnimation = (
   }, [])
 
   /**
-   * アニメーションフレームを更新（30FPS固定）
+   * アニメーションフレームを更新（指定FPS）
    */
   const updateAnimation = useCallback((currentTime: number) => {
+    const frameInterval = 1000 / fps
     const states = animationStatesRef.current
     let hasActiveAnimation = false
 
@@ -153,9 +155,9 @@ export const useGifAnimation = (
       const deltaTime = currentTime - state.lastFrameTime
       const adjustedDeltaTime = deltaTime * state.playbackSpeed
 
-      // 30FPS間隔（33.33ms）でフレーム更新
-      if (adjustedDeltaTime >= FRAME_INTERVAL) {
-        // 次の30FPS正規化フレームに進む
+      // 指定FPS間隔でフレーム更新
+      if (adjustedDeltaTime >= frameInterval) {
+        // 次の正規化フレームに進む
         const nextNormalizedFrame = (state.currentNormalizedFrame + 1) % state.normalizedInfo.normalizedFrameCount
         
         // 元GIFフレームインデックスを計算
@@ -176,7 +178,7 @@ export const useGifAnimation = (
     } else {
       animationIdRef.current = null
     }
-  }, [gifLayers, onFrameUpdate])
+  }, [gifLayers, onFrameUpdate, fps])
 
   /**
    * アニメーションループを開始
@@ -305,7 +307,7 @@ export const useGifAnimation = (
 
     const validIndex = Math.max(0, Math.min(frameIndex, layer.gifInfo.frames.length - 1))
     
-    // 30FPS正規化フレームを逆算（手動設定時は元フレーム基準）
+    // 正規化フレームを逆算（手動設定時は元フレーム基準）
     if (state.normalizedInfo) {
       const normalizedFrame = Math.round(validIndex / state.normalizedInfo.frameSkipRatio)
       state.currentNormalizedFrame = Math.min(normalizedFrame, state.normalizedInfo.normalizedFrameCount - 1)

@@ -184,12 +184,15 @@ export interface AnimationSettings {
   playbackSpeed: number
   /** ループ再生するかどうか */
   loop: boolean
+  /** フレームレート（fps） */
+  fps: number
 }
 
 export const animationSettingsAtom = atom<AnimationSettings>({
   isPlaying: false,
   playbackSpeed: 1.0,
   loop: true,
+  fps: 29.97,
 })
 
 // アニメーション制御アクション

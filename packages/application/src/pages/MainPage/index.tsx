@@ -198,7 +198,7 @@ const MainPage = () => {
                   {animationSettings.isPlaying ? '⏸️ 停止' : '▶️ 再生'}
                 </Button>
                 <div className="animation-info">
-                  <p>フレームレート: 30FPS固定</p>
+                  <p>フレームレート: {animationSettings.fps.toFixed(2)}FPS固定</p>
                   <p>速度: {animationSettings.playbackSpeed}x</p>
                   <p>ループ: {animationSettings.loop ? 'ON' : 'OFF'}</p>
                 </div>
