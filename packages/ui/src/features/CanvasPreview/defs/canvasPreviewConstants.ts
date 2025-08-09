@@ -1,8 +1,8 @@
 export const CANVAS_CONSTANTS = {
   // 出力サイズ設定
   OUTPUT_SIZE: {
-    WIDTH: 500,
-    HEIGHT: 500,
+    WIDTH: 1280,
+    HEIGHT: 720,
   },
   
   // スタイル設定

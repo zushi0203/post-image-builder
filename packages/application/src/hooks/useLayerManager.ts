@@ -68,6 +68,8 @@ export const useLayerManager = () => {
     property: K,
     value: ImageLayer[K]
   ) => {
+    const timestamp = new Date().toISOString().split('T')[1].slice(0, -1)
+    console.log(`⚙️ [${timestamp}] useLayerManager: Updating ${property} for layer "${layerId}":`, value)
     updateLayer(layerId, { [property]: value })
   }, [updateLayer])
 

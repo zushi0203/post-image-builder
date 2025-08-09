@@ -1,6 +1,6 @@
 import React from 'react'
 import { useAtom, useAtomValue } from 'jotai'
-import { ToggleSwitch, Button, LayerManager, FileDropArea, CanvasPreview, AnimationTimeline } from '@post-image-builder/ui'
+import { ToggleSwitch, Button, LayerManager, FileDropArea, CanvasPreview, AnimationTimeline, type CanvasPreviewRef } from '@post-image-builder/ui'
 import {
   previewModeAtom,
   isGeneratingAtom,
@@ -19,6 +19,9 @@ const MainPage = () => {
   const [isGenerating, setIsGenerating] = useAtom(isGeneratingAtom)
   const [canvasSettings] = useAtom(canvasSettingsAtom)
   const [, setLayerFrame] = useAtom(setLayerFrameAtom)
+
+  // CanvasPreviewのrefを追加
+  const canvasPreviewRef = React.useRef<CanvasPreviewRef>(null)
 
   // GIF生成状態の管理
   const [isExportingGif, setIsExportingGif] = React.useState(false)
@@ -41,6 +44,7 @@ const MainPage = () => {
   }
 
   const handleLayerPositionChange = React.useCallback((layerId: string, position: { x: number; y: number }) => {
+    console.log(`🔄 MainPage: Updating position for layer "${layerId}":`, position)
     updateLayerProperty(layerId, 'position', position)
   }, [updateLayerProperty])
 
@@ -63,6 +67,16 @@ const MainPage = () => {
 
   const handleExportGif = async () => {
     if (layers.length === 0) return
+
+    console.log('🎬 Starting GIF export...')
+    
+    // GIF生成前に楽観的状態を確定
+    const hasOptimisticState = canvasPreviewRef.current?.commitOptimisticState()
+    if (hasOptimisticState) {
+      console.log('⏳ Waiting for state sync after committing optimistic state...')
+      // 状態更新の完了を待つため少し待機
+      await new Promise(resolve => setTimeout(resolve, 50))
+    }
 
     setIsExportingGif(true)
     setExportProgress({ current: 0, total: 100, phase: 'analyzing' })
@@ -138,6 +152,7 @@ const MainPage = () => {
                 <>
                   <div className="canvas-container">
                     <CanvasPreview
+                      ref={canvasPreviewRef}
                       layers={layers}
                       canvasSettings={canvasSettings}
                       onLayerPositionChange={handleLayerPositionChange}
@@ -175,8 +190,6 @@ const MainPage = () => {
         {/* 右サイドバー: 設定パネル */}
         <aside className="right-sidebar">
           <section className="settings-panel">
-
-
             <div className="setting-group">
               <h3>ここで拡大率を選択</h3>
               {/* 拡大率設定コントロール */}

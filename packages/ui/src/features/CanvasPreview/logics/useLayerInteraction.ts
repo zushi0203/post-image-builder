@@ -63,20 +63,39 @@ export const useLayerInteraction = (
   }, [isDragging, selectedLayerId, dragOffset, throttledPositionChange])
 
   /**
-   * マウスアップイベント処理（デバウンス適用）
+   * マウスアップイベント処理（即座同期 + デバウンス適用）
    */
   const handleMouseUp = useCallback((finalPosition?: CanvasCoordinates) => {
     if (isDragging && selectedLayerId && finalPosition) {
-      // 最終位置を確定的に更新
+      // 最終位置を計算
       const newPosition = {
         x: finalPosition.x - dragOffset.x,
         y: finalPosition.y - dragOffset.y,
       }
+      
+      console.log(`🎯 Layer "${selectedLayerId}" drag completed. Final position:`, newPosition)
+      
+      // 即座に位置を更新（GIF生成などの即座処理用）
+      onLayerPositionChange?.(selectedLayerId, newPosition)
+      
+      // デバウンス更新もスケジュール（重複防止のため後続処理）
       debouncedPositionChange(selectedLayerId, newPosition)
     }
     
     setIsDragging(false)
-  }, [isDragging, selectedLayerId, dragOffset, debouncedPositionChange])
+  }, [isDragging, selectedLayerId, dragOffset, onLayerPositionChange, debouncedPositionChange])
+
+  /**
+   * 楽観的状態を即座に確定する関数（外部から呼び出し可能）
+   */
+  const commitOptimisticState = useCallback(() => {
+    if (isDragging && selectedLayerId) {
+      console.log(`⚡ Force committing optimistic state for layer: ${selectedLayerId}`)
+      setIsDragging(false)
+      return true
+    }
+    return false
+  }, [isDragging, selectedLayerId])
 
   /**
    * 選択されたレイヤーを取得
@@ -92,5 +111,6 @@ export const useLayerInteraction = (
     handleMouseDown,
     handleMouseMove,
     handleMouseUp,
+    commitOptimisticState, // 新しく追加
   }
 }

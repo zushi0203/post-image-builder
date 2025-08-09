@@ -62,6 +62,10 @@ export interface CanvasSettings {
   quality: number
 }
 
+export interface CanvasPreviewRef {
+  commitOptimisticState: () => boolean
+}
+
 export interface CanvasPreviewProps {
   layers: ImageLayer[]
   canvasSettings: CanvasSettings
