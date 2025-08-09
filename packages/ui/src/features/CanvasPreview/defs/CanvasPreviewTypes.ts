@@ -66,10 +66,6 @@ export interface CanvasPreviewProps {
   layers: ImageLayer[]
   canvasSettings: CanvasSettings
   onLayerPositionChange?: (layerId: string, position: { x: number; y: number }) => void
-  /** GIFアニメーション再生を有効にするかどうか */
-  isAnimationEnabled?: boolean
-  /** フレーム更新時のコールバック */
-  onFrameUpdate?: (layerId: string, frameIndex: number) => void
 }
 
 export interface CanvasCoordinates {

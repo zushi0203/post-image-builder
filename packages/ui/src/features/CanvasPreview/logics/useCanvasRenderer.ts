@@ -8,26 +8,22 @@ import {
   drawSelectionBox 
 } from './canvasDrawer'
 import { useAnimationFrame } from './useAnimationFrame'
-import { useGifAnimation } from './useGifAnimation'
+
 
 /**
  * キャンバス描画を管理するカスタムフック
  * requestAnimationFrameで描画頻度を制御し、パフォーマンスを最適化
- * GIFアニメーション制御も統合
  */
 export const useCanvasRenderer = (
   canvasRef: React.RefObject<HTMLCanvasElement>,
   layers: ImageLayer[],
   canvasSettings: CanvasSettings,
   selectedLayer: ImageLayer | null,
-  isDragging: boolean = false,
-  isAnimationEnabled: boolean = false,
-  onFrameUpdate?: (layerId: string, frameIndex: number) => void
+  isDragging: boolean = false
 ) => {
   const { requestFrame, cancelFrame } = useAnimationFrame()
   
-  // GIFアニメーション制御
-  const gifAnimation = useGifAnimation(layers, onFrameUpdate)
+
 
   /**
    * キャンバスの再描画処理
@@ -79,16 +75,7 @@ export const useCanvasRenderer = (
     }
   }, [scheduleRedraw, isDragging, layers, selectedLayer])
 
-  /**
-   * アニメーション有効/無効制御
-   */
-  useEffect(() => {
-    if (isAnimationEnabled) {
-      gifAnimation.play()
-    } else {
-      gifAnimation.pause()
-    }
-  }, [isAnimationEnabled, gifAnimation])
+
 
   /**
    * クリーンアップ
@@ -96,14 +83,11 @@ export const useCanvasRenderer = (
   useEffect(() => {
     return () => {
       cancelFrame()
-      gifAnimation.pause()
     }
-  }, [cancelFrame, gifAnimation])
+  }, [cancelFrame])
 
   return {
     redrawCanvas,
     scheduleRedraw,
-    // GIFアニメーション制御を公開
-    gifAnimation,
   }
 }
