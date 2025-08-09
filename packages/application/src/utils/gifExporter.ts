@@ -15,19 +15,6 @@ export interface GifExportProgress {
 }
 
 /**
- * 出力領域の座標を計算（CanvasPreviewConstants相当）
- */
-const CANVAS_CONSTANTS = {
-  OUTPUT_SIZE: {
-    WIDTH: 500,
-    HEIGHT: 500,
-  },
-  OPACITY: {
-    OUTSIDE_FRAME: 0.3,
-  },
-} as const
-
-/**
  * 描画用の画像ソースを取得（GIF対応）
  */
 const getImageSource = (layer: ImageLayer): CanvasImageSource | null => {
@@ -113,17 +100,39 @@ const getFrameDelay = (layers: ImageLayer[], frameIndex: number): number => {
 const drawLayerToCanvas = (
   ctx: CanvasRenderingContext2D,
   layer: ImageLayer,
-  canvasWidth: number,
-  canvasHeight: number
+  tempCanvasWidth: number,
+  tempCanvasHeight: number,
+  canvasSettings: CanvasSettings
 ): void => {
   if (!layer.visible) return
 
   const imageSource = getImageSource(layer)
-  if (!imageSource) return
+  console.log(`🔍 Layer "${layer.name}": imageSource exists: ${!!imageSource}, visible: ${layer.visible}`)
+  
+  if (!imageSource) {
+    console.log(`❌ No image source for layer "${layer.name}"`)
+    return
+  }
 
   const { width, height } = getImageSize(imageSource)
   const scaledWidth = width * layer.scale
   const scaledHeight = height * layer.scale
+  
+  console.log(`📏 Layer "${layer.name}" size: ${width}x${height} -> ${scaledWidth}x${scaledHeight} (scale: ${layer.scale})`)
+
+  // 一時canvasの中央を基準とした座標に変換
+  const tempCenterX = tempCanvasWidth / 2
+  const tempCenterY = tempCanvasHeight / 2
+  
+  // 元のcanvasサイズの中央を基準とした座標系から一時canvasへの変換
+  // layer.position は元のcanvasサイズ（例：1920x1080）の座標系での値
+  const originalCenterX = canvasSettings.width / 2
+  const originalCenterY = canvasSettings.height / 2
+  
+  // 元のcanvas座標系から一時canvas座標系への変換
+  // layer.position.x は元のcanvas中央からの相対位置として扱う
+  const relativeX = layer.position.x - originalCenterX
+  const relativeY = layer.position.y - originalCenterY
 
   // GIFフレームの場合、フレーム位置オフセットを適用
   let offsetX = 0
@@ -138,25 +147,30 @@ const drawLayerToCanvas = (
       const gifWidth = layer.gifInfo.width * layer.scale
       const gifHeight = layer.gifInfo.height * layer.scale
       
-      const gifX = layer.position.x - gifWidth / 2
-      const gifY = layer.position.y - gifHeight / 2
+      const gifX = tempCenterX + relativeX - gifWidth / 2
+      const gifY = tempCenterY + relativeY - gifHeight / 2
       
       offsetX = gifX + (currentFrame.left * layer.scale)
       offsetY = gifY + (currentFrame.top * layer.scale)
     }
   }
   
-  const x = layer.type === 'gif' ? offsetX : layer.position.x - scaledWidth / 2
-  const y = layer.type === 'gif' ? offsetY : layer.position.y - scaledHeight / 2
+  // 通常のレイヤーまたはGIFレイヤーの最終座標
+  const x = layer.type === 'gif' ? offsetX : tempCenterX + relativeX - scaledWidth / 2
+  const y = layer.type === 'gif' ? offsetY : tempCenterY + relativeY - scaledHeight / 2
+  
+  console.log(`📍 Layer "${layer.name}" final position: (${x}, ${y}), tempCenter: (${tempCenterX}, ${tempCenterY}), layerPos: (${layer.position.x}, ${layer.position.y})`)
 
   ctx.save()
   
-  // 回転処理
+  // 回転処理（回転中心も一時canvas基準に調整）
   if (layer.rotation !== 0) {
     const radians = (layer.rotation * Math.PI) / 180
-    ctx.translate(layer.position.x, layer.position.y)
+    const rotationCenterX = tempCenterX + relativeX
+    const rotationCenterY = tempCenterY + relativeY
+    ctx.translate(rotationCenterX, rotationCenterY)
     ctx.rotate(radians)
-    ctx.translate(-layer.position.x, -layer.position.y)
+    ctx.translate(-rotationCenterX, -rotationCenterY)
   }
 
   ctx.globalAlpha = layer.opacity
@@ -173,10 +187,15 @@ const renderOutputFrame = (
   canvasSettings: CanvasSettings,
   frameIndex: number
 ): HTMLCanvasElement => {
-  // 出力サイズのCanvasを作成
+  console.log(`🎬 Rendering frame ${frameIndex}, layers count: ${layers.length}`)
+  
+  // 出力サイズは固定500x500px
+  const OUTPUT_WIDTH = 500
+  const OUTPUT_HEIGHT = 500
+
   const outputCanvas = document.createElement('canvas')
-  outputCanvas.width = canvasSettings.width
-  outputCanvas.height = canvasSettings.height
+  outputCanvas.width = OUTPUT_WIDTH
+  outputCanvas.height = OUTPUT_HEIGHT
 
   const outputCtx = outputCanvas.getContext('2d')
   if (!outputCtx) throw new Error('Failed to create output canvas context')
@@ -184,15 +203,18 @@ const renderOutputFrame = (
   // 背景色を設定
   if (canvasSettings.backgroundColor) {
     outputCtx.fillStyle = canvasSettings.backgroundColor
-    outputCtx.fillRect(0, 0, canvasSettings.width, canvasSettings.height)
+    outputCtx.fillRect(0, 0, OUTPUT_WIDTH, OUTPUT_HEIGHT)
+    console.log(`🎨 Background color set: ${canvasSettings.backgroundColor}`)
   }
 
   // 大きめの一時Canvasを作成（レイヤー描画用）
   const tempCanvas = document.createElement('canvas')
-  const tempWidth = Math.max(canvasSettings.width * 2, 1000)
-  const tempHeight = Math.max(canvasSettings.height * 2, 1000)
+  const tempWidth = Math.max(canvasSettings.width * 2, 2000)
+  const tempHeight = Math.max(canvasSettings.height * 2, 2000)
   tempCanvas.width = tempWidth
   tempCanvas.height = tempHeight
+
+  console.log(`📐 Temp canvas size: ${tempWidth}x${tempHeight}`)
 
   const tempCtx = tempCanvas.getContext('2d')
   if (!tempCtx) throw new Error('Failed to create temp canvas context')
@@ -206,28 +228,40 @@ const renderOutputFrame = (
 
   // フレーム時点でのレイヤー状態を取得
   const frameLayerStates = layers.map(layer => getLayerStateAtFrame(layer, frameIndex))
+  console.log(`🔄 Frame layer states created, count: ${frameLayerStates.length}`)
 
   // レイヤーをzIndexの順序でソートして描画
   const visibleLayers = frameLayerStates
     .filter(layer => layer.visible && layer.imageData)
     .sort((a, b) => a.zIndex - b.zIndex)
 
-  // 各レイヤーを描画
-  visibleLayers.forEach(layer => {
-    drawLayerToCanvas(tempCtx, layer, tempWidth, tempHeight)
+  console.log(`👁️ Visible layers: ${visibleLayers.length}/${frameLayerStates.length}`)
+  
+  visibleLayers.forEach((layer, index) => {
+    console.log(`🖼️ Drawing layer ${index}: ${layer.name}, position: (${layer.position.x}, ${layer.position.y}), scale: ${layer.scale}`)
   })
 
-  // 出力領域を計算（Canvas中央に配置）
-  const outputX = (tempWidth - canvasSettings.width) / 2
-  const outputY = (tempHeight - canvasSettings.height) / 2
+  // 各レイヤーを描画
+  visibleLayers.forEach(layer => {
+    drawLayerToCanvas(tempCtx, layer, tempWidth, tempHeight, canvasSettings)
+  })
 
-  // 出力領域のみを抽出
+  // Canvas中央から500x500pxの領域を抽出
+  const centerX = tempWidth / 2
+  const centerY = tempHeight / 2
+  const extractX = centerX - OUTPUT_WIDTH / 2
+  const extractY = centerY - OUTPUT_HEIGHT / 2
+
+  console.log(`✂️ Extracting from temp canvas: (${extractX}, ${extractY}) -> (${extractX + OUTPUT_WIDTH}, ${extractY + OUTPUT_HEIGHT})`)
+
+  // 中央500x500px領域を出力Canvasにコピー
   outputCtx.drawImage(
     tempCanvas,
-    outputX, outputY, canvasSettings.width, canvasSettings.height,
-    0, 0, canvasSettings.width, canvasSettings.height
+    extractX, extractY, OUTPUT_WIDTH, OUTPUT_HEIGHT,
+    0, 0, OUTPUT_WIDTH, OUTPUT_HEIGHT
   )
 
+  console.log(`✅ Frame ${frameIndex} rendering completed`)
   return outputCanvas
 }
 
@@ -251,7 +285,7 @@ export const exportLayersToGif = async (
       onProgress?.({ current: 0, total: 100, phase: 'analyzing' })
 
       const maxFrames = getMaxFrameCount(layers)
-      console.log(`🎬 Generating GIF: ${maxFrames} frames, ${canvasSettings.width}×${canvasSettings.height}px`)
+      console.log(`🎬 Generating GIF: ${maxFrames} frames, 500×500px`)
 
       onProgress?.({ current: 10, total: 100, phase: 'rendering' })
 
@@ -260,8 +294,8 @@ export const exportLayersToGif = async (
         workers,
         quality,
         workerScript,
-        width: canvasSettings.width,
-        height: canvasSettings.height
+        width: 500,
+        height: 500
       })
 
       // 各フレームを生成してGIFに追加
