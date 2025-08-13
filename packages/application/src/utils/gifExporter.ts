@@ -102,16 +102,11 @@ const drawLayerToCanvas = (
     return
   }
 
-  const { width, height } = getImageSize(imageSource)
-  const scaledWidth = width * layer.scale
-  const scaledHeight = height * layer.scale
-  
   // 一時canvasの中央を基準とした座標に変換
   const tempCenterX = tempCanvasWidth / 2
   const tempCenterY = tempCanvasHeight / 2
   
   // 元のcanvasサイズの中央を基準とした座標系から一時canvasへの変換
-  // layer.position は元のcanvasサイズ（例：1920x1080）の座標系での値
   const originalCenterX = canvasSettings.width / 2
   const originalCenterY = canvasSettings.height / 2
   
@@ -119,38 +114,73 @@ const drawLayerToCanvas = (
   const relativeX = layer.position.x - originalCenterX
   const relativeY = layer.position.y - originalCenterY
 
-  // GIFフレームの場合、フレーム位置オフセットを適用
-  let finalX = tempCenterX + relativeX - scaledWidth / 2
-  let finalY = tempCenterY + relativeY - scaledHeight / 2
-  
+  // GIFレイヤーの場合は、GIF全体サイズを基準とした統一計算
   if (layer.type === 'gif' && layer.gifInfo && layer.gifInfo.frames.length > 0) {
     const frameIndex = layer.currentFrameIndex || 0
     const validIndex = Math.max(0, Math.min(frameIndex, layer.gifInfo.frames.length - 1))
     const currentFrame = layer.gifInfo.frames[validIndex]
     
     if (currentFrame) {
-      // GIFフレーム内でのオフセットを追加
-      finalX += (currentFrame.left * layer.scale)
-      finalY += (currentFrame.top * layer.scale)
+      // GIF全体サイズを基準とした計算（プレビューと統一）
+      const gifWidth = layer.gifInfo.width * layer.scale
+      const gifHeight = layer.gifInfo.height * layer.scale
+      
+      // GIF全体を基準とした中央配置の起点
+      const gifX = tempCenterX + relativeX - gifWidth / 2
+      const gifY = tempCenterY + relativeY - gifHeight / 2
+      
+      // フレームのオフセット位置（スケール適用）
+      const frameOffsetX = gifX + (currentFrame.left * layer.scale)
+      const frameOffsetY = gifY + (currentFrame.top * layer.scale)
+      
+      // フレーム固有のサイズを取得
+      const { width: frameWidth, height: frameHeight } = getImageSize(imageSource)
+      const scaledFrameWidth = frameWidth * layer.scale
+      const scaledFrameHeight = frameHeight * layer.scale
+      
+      console.log(`🎬 GIF Frame ${frameIndex}: GIF(${layer.gifInfo.width}×${layer.gifInfo.height}), Frame(${frameWidth}×${frameHeight}), Offset(${currentFrame.left}, ${currentFrame.top})`)
+      
+      ctx.save()
+      
+      // 回転処理（回転中心はGIF全体の中心）
+      if (layer.rotation !== 0) {
+        const radians = (layer.rotation * Math.PI) / 180
+        const rotationCenterX = tempCenterX + relativeX
+        const rotationCenterY = tempCenterY + relativeY
+        ctx.translate(rotationCenterX, rotationCenterY)
+        ctx.rotate(radians)
+        ctx.translate(-rotationCenterX, -rotationCenterY)
+      }
+
+      ctx.globalAlpha = layer.opacity
+      ctx.drawImage(imageSource, frameOffsetX, frameOffsetY, scaledFrameWidth, scaledFrameHeight)
+      ctx.restore()
     }
+  } else {
+    // 通常の画像レイヤーの場合
+    const { width, height } = getImageSize(imageSource)
+    const scaledWidth = width * layer.scale
+    const scaledHeight = height * layer.scale
+    
+    const finalX = tempCenterX + relativeX - scaledWidth / 2
+    const finalY = tempCenterY + relativeY - scaledHeight / 2
+
+    ctx.save()
+    
+    // 回転処理
+    if (layer.rotation !== 0) {
+      const radians = (layer.rotation * Math.PI) / 180
+      const rotationCenterX = tempCenterX + relativeX
+      const rotationCenterY = tempCenterY + relativeY
+      ctx.translate(rotationCenterX, rotationCenterY)
+      ctx.rotate(radians)
+      ctx.translate(-rotationCenterX, -rotationCenterY)
+    }
+
+    ctx.globalAlpha = layer.opacity
+    ctx.drawImage(imageSource, finalX, finalY, scaledWidth, scaledHeight)
+    ctx.restore()
   }
-
-  ctx.save()
-  
-  // 回転処理（回転中心も一時canvas基準に調整）
-  if (layer.rotation !== 0) {
-    const radians = (layer.rotation * Math.PI) / 180
-    const rotationCenterX = tempCenterX + relativeX
-    const rotationCenterY = tempCenterY + relativeY
-    ctx.translate(rotationCenterX, rotationCenterY)
-    ctx.rotate(radians)
-    ctx.translate(-rotationCenterX, -rotationCenterY)
-  }
-
-  ctx.globalAlpha = layer.opacity
-  ctx.drawImage(imageSource, finalX, finalY, scaledWidth, scaledHeight)
-
-  ctx.restore()
 }
 
 /**

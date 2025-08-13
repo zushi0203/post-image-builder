@@ -1,7 +1,7 @@
 {
   "name": "@post-image-builder/root",
   "version": "0.1.0",
-  "description": "ゲーム広報用のSNS画像生成Webアプリケーション",
+  "description": "",
   "private": true,
   "type": "module",
   "workspaces": [
