@@ -1,5 +1,5 @@
 import React, { useRef } from 'react'
-import type { CanvasPreviewProps } from './defs/CanvasPreviewTypes'
+import type { CanvasPreviewProps, CanvasPreviewRef } from './defs/CanvasPreviewTypes'
 import { useCanvasRenderer } from './logics/useCanvasRenderer'
 import { useLayerInteraction } from './logics/useLayerInteraction'
 import { useCanvasCoordinates } from './logics/useCanvasCoordinates'
@@ -35,16 +35,18 @@ export const CanvasPreview = React.forwardRef<
     handleMouseMove,
     handleMouseUp,
     commitOptimisticState,
-  } = useLayerInteraction(optimisticLayers, (layerId, position) => {
-    // ドラッグ中は楽観的状態のみ更新
-    if (isDragging) {
+  } = useLayerInteraction(
+    optimisticLayers,
+    // ドラッグ中の処理
+    (layerId, position) => {
       updateOptimisticPosition(layerId, position)
-    } else {
-      // ドラッグ完了時は正式状態を更新し、楽観的状態をクリア
+    },
+    // ドラッグ完了時の処理
+    (layerId, position) => {
       onLayerPositionChange?.(layerId, position)
       clearOptimisticState(layerId)
     }
-  })
+  )
 
   // 外部から呼び出し可能な状態確定機能をrefで公開
   React.useImperativeHandle(ref, () => ({

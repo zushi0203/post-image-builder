@@ -8,7 +8,8 @@ import { useHitTestCache } from './useCoordinateCache'
  */
 export const useLayerInteraction = (
   layers: ImageLayer[],
-  onLayerPositionChange?: (layerId: string, position: CanvasCoordinates) => void
+  onDragPositionChange?: (layerId: string, position: CanvasCoordinates) => void,
+  onDragComplete?: (layerId: string, position: CanvasCoordinates) => void
 ) => {
   const [selectedLayerId, setSelectedLayerId] = useState<string | null>(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -16,12 +17,12 @@ export const useLayerInteraction = (
 
   // スロットリングされた位置更新（16ms = 60FPS制限）
   const throttledPositionChange = useThrottle((layerId: string, position: CanvasCoordinates) => {
-    onLayerPositionChange?.(layerId, position)
+    onDragPositionChange?.(layerId, position)
   }, 16)
 
   // デバウンスされた最終位置更新（ドラッグ終了後の確定）
   const debouncedPositionChange = useDebounce((layerId: string, position: CanvasCoordinates) => {
-    onLayerPositionChange?.(layerId, position)
+    onDragComplete?.(layerId, position)
   }, 100)
 
   // ヒットテスト用の最適化されたキャッシュ
@@ -75,15 +76,18 @@ export const useLayerInteraction = (
       
       console.log(`🎯 Layer "${selectedLayerId}" drag completed. Final position:`, newPosition)
       
-      // 即座に位置を更新（GIF生成などの即座処理用）
-      onLayerPositionChange?.(selectedLayerId, newPosition)
+      // ドラッグ状態を先にクリアしてから完了処理を実行
+      setIsDragging(false)
+      
+      // 即座にドラッグ完了処理を実行（GIF生成などの即座処理用）
+      onDragComplete?.(selectedLayerId, newPosition)
       
       // デバウンス更新もスケジュール（重複防止のため後続処理）
       debouncedPositionChange(selectedLayerId, newPosition)
+    } else {
+      setIsDragging(false)
     }
-    
-    setIsDragging(false)
-  }, [isDragging, selectedLayerId, dragOffset, onLayerPositionChange, debouncedPositionChange])
+  }, [isDragging, selectedLayerId, dragOffset, onDragComplete, debouncedPositionChange])
 
   /**
    * 楽観的状態を即座に確定する関数（外部から呼び出し可能）
