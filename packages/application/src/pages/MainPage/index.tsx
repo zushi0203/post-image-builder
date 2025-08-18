@@ -11,7 +11,7 @@ import {
 } from '../../store/atoms'
 import { useFileHandler } from '../../hooks/useFileHandler'
 import { useLayerManager } from '../../hooks/useLayerManager'
-import { exportLayersToGif, downloadGif, type GifExportProgress } from '../../utils/gifExporter'
+import { exportLayersToGif, downloadGif, calculateOutputInfo, type GifExportProgress } from '../../utils/gifExporter'
 import './MainPage.css'
 
 const MainPage = () => {
@@ -118,6 +118,11 @@ const MainPage = () => {
     zIndex: layer.zIndex,
   })), [layers])
 
+  // 出力予定の情報を計算（メモ化）
+  const outputInfo = React.useMemo(() => {
+    return calculateOutputInfo(layers)
+  }, [layers])
+
   return (
     <div className="main-page">
       {/* ヘッダー */}
@@ -206,13 +211,20 @@ const MainPage = () => {
             </div>
 
             <div className="setting-group">
-              <h3>ここで出力情報を記録</h3>
+              <h3>出力予定情報</h3>
               <ul className="output-info">
-                <li>• サイズ</li>
-                <li>• 画像形式</li>
-                <li>• 再生時間</li>
-                <li>• ファイル容量</li>
-                <li>など</li>
+                <li>• サイズ: 1280×720px</li>
+                <li>• 画像形式: GIF</li>
+                {outputInfo.hasGifLayers ? (
+                  <>
+                    <li>• フレーム数: {outputInfo.frameCount}</li>
+                    <li>• 平均ディレイ: {outputInfo.averageDelayMs}ms</li>
+                    <li>• 推定FPS: {outputInfo.estimatedFps}</li>
+                    <li>• 総再生時間: {(outputInfo.totalDurationMs / 1000).toFixed(1)}秒</li>
+                  </>
+                ) : (
+                  <li>• アニメーション情報: GIFレイヤーなし</li>
+                )}
               </ul>
             </div>
 

@@ -57,6 +57,45 @@ const getMaxFrameCount = (layers: ImageLayer[]): number => {
 
   return Math.max(...gifLayers.map(layer => layer.gifInfo?.frames.length || 1))
 }
+/**
+ * 出力予定のディレイ情報を計算
+ */
+export const calculateOutputInfo = (layers: ImageLayer[]) => {
+  const maxFrames = getMaxFrameCount(layers)
+
+  if (maxFrames === 0) {
+    return {
+      hasGifLayers: false,
+      frameCount: 0,
+      averageDelayMs: 0,
+      totalDurationMs: 0,
+      estimatedFps: 0
+    }
+  }
+
+  // 各フレームのディレイを計算
+  const frameDelays: number[] = []
+  for (let frameIndex = 0; frameIndex < maxFrames; frameIndex++) {
+    const delay = getFrameDelay(layers, frameIndex)
+    frameDelays.push(delay)
+  }
+
+  const totalDuration = frameDelays.reduce((sum, delay) => sum + delay, 0)
+  const averageDelay = totalDuration / frameDelays.length
+  const estimatedFps = Math.round(1000 / averageDelay * 10) / 10
+
+  // GIFレイヤーが存在するかチェック
+  const hasGifLayers = layers.some(layer => layer.type === 'gif' && layer.gifInfo)
+
+  return {
+    hasGifLayers,
+    frameCount: maxFrames,
+    averageDelayMs: Math.round(averageDelay),
+    totalDurationMs: Math.round(totalDuration),
+    estimatedFps,
+    frameDelays // 詳細情報として各フレームのディレイも含める
+  }
+}
 
 /**
  * 特定フレーム時点でのレイヤー状態を取得
@@ -83,10 +122,10 @@ const getLayerStateAtFrame = (layer: ImageLayer, frameIndex: number): ImageLayer
 const getFrameDelay = (layers: ImageLayer[], frameIndex: number): number => {
   const DEFAULT_DELAY = Math.round(1000 / 29.97) // 約33ms (29.97fps)
   const MIN_DELAY = 10 // 最小10ms（100fps相当）
-  
+
   // GIFレイヤーから現在のフレームでの遅延時間を収集
   const gifDelays: number[] = []
-  
+
   layers.forEach(layer => {
     if (layer.type === 'gif' && layer.gifInfo && layer.gifInfo.frames.length > 0) {
       // 各GIFレイヤーの現在フレームでの遅延時間を取得
@@ -98,7 +137,7 @@ const getFrameDelay = (layers: ImageLayer[], frameIndex: number): number => {
       }
     }
   })
-  
+
   // GIFレイヤーが存在する場合
   if (gifDelays.length > 0) {
     // 複数のGIFがある場合は最小遅延時間を使用（最も頻繁に更新が必要なレイヤーに合わせる）
@@ -106,7 +145,7 @@ const getFrameDelay = (layers: ImageLayer[], frameIndex: number): number => {
     // 最小制限を適用
     return Math.max(minGifDelay, MIN_DELAY)
   }
-  
+
   // GIFレイヤーが存在しない場合はデフォルトを使用
   return DEFAULT_DELAY
 }
