@@ -187,8 +187,8 @@ const processFrame = async (
   // キャンバスに描画
   ctx.putImageData(imageData, 0, 0)
   
-  // 遅延時間（centisecondsをミリ秒に変換）
-  const delay = rawFrame.delay ? rawFrame.delay * 10 : 100
+  // 遅延時間（そのまま使用 - 実際のテスト結果に基づく）
+  const delay = rawFrame.delay || 100
   
   return {
     id: `${fileName}-frame-${index}`,
