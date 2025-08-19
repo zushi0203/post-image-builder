@@ -8,6 +8,7 @@ export interface Layer {
   type: 'image' | 'background' | 'gif'
   visible: boolean
   zIndex: number
+  averageDelayMs?: number // GIFレイヤーの平均ディレイ（ms）
 }
 
 export interface LayerManagerProps {
@@ -64,9 +65,14 @@ const LayerItem = ({ layer, isSelected, onSelect, onVisibilityToggle }: LayerIte
       onClick={onSelect}
     >
       <span className="layer-icon">
-        {layer.type === 'image' ? 'img' : 'bg'}
+        {layer.type === 'gif' ? '🎬' : layer.type === 'image' ? '🖼️' : '🎨'}
       </span>
-      <span className="layer-name">{layer.name}</span>
+      <div className="layer-info">
+        <span className="layer-name">{layer.name}</span>
+        {layer.type === 'gif' && layer.averageDelayMs && (
+          <span className="layer-delay">{layer.averageDelayMs}ms</span>
+        )}
+      </div>
       <Button
         variant="secondary"
         size="small"

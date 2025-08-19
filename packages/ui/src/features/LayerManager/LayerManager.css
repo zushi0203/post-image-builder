@@ -71,8 +71,15 @@
     color: #5865f2;
   }
 
-  .layer-name {
+  .layer-info {
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    overflow: hidden;
+  }
+
+  .layer-name {
     color: #dcddde;
     font-size: 0.875rem;
     font-weight: 500;
@@ -81,8 +88,18 @@
     white-space: nowrap;
   }
 
+  .layer-delay {
+    color: #72767d;
+    font-size: 0.75rem;
+    font-weight: 400;
+  }
+
   .layer-item-selected .layer-name {
     color: white;
+  }
+
+  .layer-item-selected .layer-delay {
+    color: rgba(255, 255, 255, 0.7);
   }
 
   .layer-visibility-btn {

@@ -110,13 +110,29 @@ const MainPage = () => {
   }
 
   // UIコンポーネント用のレイヤーデータに変換（メモ化）
-  const uiLayers = React.useMemo(() => layers.map(layer => ({
-    id: layer.id,
-    name: layer.name,
-    type: layer.type,
-    visible: layer.visible,
-    zIndex: layer.zIndex,
-  })), [layers])
+  const uiLayers = React.useMemo(() => layers.map(layer => {
+    const baseLayer = {
+      id: layer.id,
+      name: layer.name,
+      type: layer.type,
+      visible: layer.visible,
+      zIndex: layer.zIndex,
+    }
+
+    // GIFレイヤーの場合は平均ディレイ情報を追加
+    if (layer.type === 'gif' && layer.gifInfo && layer.gifInfo.frames.length > 0) {
+      const frames = layer.gifInfo.frames
+      const totalDelay = frames.reduce((sum, frame) => sum + frame.delay, 0)
+      const averageDelayMs = Math.round(totalDelay / frames.length)
+      
+      return {
+        ...baseLayer,
+        averageDelayMs
+      }
+    }
+
+    return baseLayer
+  }), [layers])
 
   // 出力予定の情報を計算（メモ化）
   const outputInfo = React.useMemo(() => {
