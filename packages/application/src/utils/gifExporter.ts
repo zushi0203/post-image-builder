@@ -340,7 +340,7 @@ export const exportLayersToGif = async (
   onProgress?: (progress: GifExportProgress) => void
 ): Promise<Blob> => {
   const {
-    quality = 10,
+    quality = 1,
     workers = 2,
     workerScript = '/gif.worker.js'
   } = options
@@ -359,18 +359,25 @@ export const exportLayersToGif = async (
 
       onProgress?.({ current: 10, total: 100, phase: 'rendering' })
 
+      // 全フレームを事前に生成してグローバルパレット用のサンプリングを準備
+      const allFrameCanvases: HTMLCanvasElement[] = []
+      for (let frameIndex = 0; frameIndex < maxFrames; frameIndex++) {
+        const frameCanvas = renderOutputFrame(layers, canvasSettings, frameIndex)
+        allFrameCanvases.push(frameCanvas)
+      }
+
       // GIF.js インスタンス作成（publicフォルダのworkerScriptを使用）
       const gif = new GIF({
         workers,
         quality,
         workerScript,
         width: 1280,
-        height: 720
+        height: 720,
+        globalPalette: true // グローバルパレット有効化
       })
 
-      // 各フレームを生成してGIFに追加
-      for (let frameIndex = 0; frameIndex < maxFrames; frameIndex++) {
-        const frameCanvas = renderOutputFrame(layers, canvasSettings, frameIndex)
+      // 事前生成したフレームをGIFに追加
+      allFrameCanvases.forEach((frameCanvas, frameIndex) => {
         const frameDelay = getFrameDelay(layers, frameIndex)
 
         gif.addFrame(frameCanvas, {
@@ -380,7 +387,7 @@ export const exportLayersToGif = async (
 
         const renderProgress = 10 + (frameIndex + 1) / maxFrames * 40
         onProgress?.({ current: renderProgress, total: 100, phase: 'rendering' })
-      }
+      })
 
       onProgress?.({ current: 50, total: 100, phase: 'encoding' })
 
