@@ -107,48 +107,48 @@ export const parseGifFrames = async (
   try {
     // ファイルをArrayBufferとして読み込み
     const arrayBuffer = await fileToArrayBuffer(file)
-    
+
     // GIFを解析
     const gif = parseGIF(arrayBuffer)
     onProgress?.(1, 4)
-    
+
     // フレームを展開
     const rawFrames = decompressFrames(gif, true)
     onProgress?.(2, 4)
-    
+
     if (rawFrames.length === 0) {
       throw new Error('No frames found in GIF')
     }
-    
+
     // フレーム数制限
     const framesToProcess = rawFrames.slice(0, maxFrames)
-    
+
     // 各フレームを処理
     const frames: import('../store/types').GifFrame[] = []
     let totalDuration = 0
-    
+
     for (let i = 0; i < framesToProcess.length; i++) {
       const rawFrame = framesToProcess[i]
-      
+
       // サイズ制限チェック
       if (rawFrame.dims.width > maxSize || rawFrame.dims.height > maxSize) {
         console.warn(`Frame ${i} exceeds size limit: ${rawFrame.dims.width}x${rawFrame.dims.height}`)
         continue
       }
-      
+
       try {
         const frame = await processFrame(rawFrame, i, file.name)
         frames.push(frame)
         totalDuration += frame.delay
-        
+
         onProgress?.(2 + (i + 1) / framesToProcess.length, 4)
       } catch (error) {
         console.error(`Failed to process frame ${i}:`, error)
       }
     }
-    
+
     onProgress?.(4, 4)
-    
+
     return {
       frames,
       width: gif.lsd.width,
@@ -170,26 +170,53 @@ const processFrame = async (
   fileName: string
 ): Promise<import('../store/types').GifFrame> => {
   const { dims, patch } = rawFrame
-  
+
   // キャンバスを作成
   const canvas = document.createElement('canvas')
   canvas.width = dims.width
   canvas.height = dims.height
-  
-  const ctx = canvas.getContext('2d')
+
+  const ctx = canvas.getContext('2d', { colorSpace: 'srgb' })
   if (!ctx) {
     throw new Error('Failed to get canvas context')
   }
-  
-  // ImageDataを作成
-  const imageData = new ImageData(patch, dims.width, dims.height)
-  
+
+  // ピクセル補間を無効化して色精度を保持
+  ctx.imageSmoothingEnabled = false
+
+  // ImageDataを直接操作して色精度を向上
+  const imageData = ctx.createImageData(dims.width, dims.height)
+  const data = imageData.data
+
+  // patchデータを直接コピー（色変換を最小化）
+  for (let i = 0; i < patch.length; i += 4) {
+    const r = patch[i]
+    const g = patch[i + 1]
+    const b = patch[i + 2]
+    const a = patch[i + 3]
+
+    // 透明色処理の改良（アルファ値の精密制御）
+    if (rawFrame.transparentIndex !== undefined && a === 0) {
+      // 透明ピクセルの場合、完全透明に設定
+      data[i] = 0
+      data[i + 1] = 0
+      data[i + 2] = 0
+      data[i + 3] = 0
+    } else {
+      // 通常ピクセルの場合、色値をそのまま保持
+      data[i] = r
+      data[i + 1] = g
+      data[i + 2] = b
+      data[i + 3] = a
+    }
+  }
+
   // キャンバスに描画
   ctx.putImageData(imageData, 0, 0)
-  
+
   // 遅延時間（そのまま使用 - 実際のテスト結果に基づく）
   const delay = rawFrame.delay || 100
-  
+
   return {
     id: `${fileName}-frame-${index}`,
     canvas,
@@ -210,7 +237,7 @@ const processFrame = async (
 const getLoopCount = (gif: any): number => {
   // Netscape Application Extension を探す
   for (const frame of gif.frames) {
-    if (frame.applicationExtension?.identifier === 'NETSCAPE' && 
+    if (frame.applicationExtension?.identifier === 'NETSCAPE' &&
         frame.applicationExtension?.authenticationCode === '2.0') {
       const data = frame.applicationExtension.data
       if (data && data.length >= 3) {
@@ -243,7 +270,7 @@ export const frameToImage = (frame: import('../store/types').GifFrame): Promise<
     const img = new Image()
     img.onload = () => resolve(img)
     img.onerror = reject
-    
+
     // CanvasをBlobに変換してURL作成
     frame.canvas.toBlob((blob) => {
       if (!blob) {
@@ -264,7 +291,7 @@ export const logGifInfo = (gifInfo: import('../store/types').GifInfo): void => {
   console.log(`🔄 Loop Count: ${gifInfo.loopCount === 0 ? 'Infinite' : gifInfo.loopCount}`)
   console.log(`⏱️  Total Duration: ${gifInfo.totalDuration}ms (${(gifInfo.totalDuration / 1000).toFixed(1)}s)`)
   console.log(`🎞️  Frame Count: ${gifInfo.frames.length}`)
-  
+
   if (gifInfo.frames.length > 0) {
     console.group(`📋 Frame Details`)
     gifInfo.frames.forEach((frame, index) => {
@@ -280,10 +307,10 @@ export const logGifInfo = (gifInfo: import('../store/types').GifInfo): void => {
  */
 export const calculateFrameRate = (frames: import('../store/types').GifFrame[]): number => {
   if (frames.length === 0) return 0
-  
+
   const totalDelay = frames.reduce((sum, frame) => sum + frame.delay, 0)
   const averageDelay = totalDelay / frames.length
-  
+
   // FPS = 1000ms / 平均遅延時間
   return Math.round(1000 / averageDelay * 100) / 100
 }
@@ -307,29 +334,29 @@ export const getFrameStats = (frames: import('../store/types').GifFrame[]): {
       uniqueSizes: []
     }
   }
-  
+
   const delays = frames.map(f => f.delay)
   const minDelay = Math.min(...delays)
   const maxDelay = Math.max(...delays)
   const avgDelay = delays.reduce((sum, delay) => sum + delay, 0) / delays.length
-  
+
   // サイズの統計
   const sizeMap = new Map<string, { width: number; height: number; count: number }>()
   let totalSize = 0
-  
+
   frames.forEach(frame => {
     const key = `${frame.width}x${frame.height}`
     const existing = sizeMap.get(key)
-    
+
     if (existing) {
       existing.count++
     } else {
       sizeMap.set(key, { width: frame.width, height: frame.height, count: 1 })
     }
-    
+
     totalSize += frame.width * frame.height * 4 // RGBA = 4 bytes per pixel
   })
-  
+
   return {
     minDelay,
     maxDelay,
@@ -346,10 +373,10 @@ export const createProgressBar = (current: number, total: number, width: number 
   const progress = Math.min(current / total, 1)
   const filled = Math.floor(progress * width)
   const empty = width - filled
-  
+
   const bar = '█'.repeat(filled) + '░'.repeat(empty)
   const percentage = Math.round(progress * 100)
-  
+
   return `${bar} ${percentage}%`
 }
 
@@ -362,7 +389,7 @@ export const downloadFrame = (frame: import('../store/types').GifFrame, fileName
       console.error('Failed to create blob from canvas')
       return
     }
-    
+
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
@@ -380,21 +407,21 @@ export const downloadFrame = (frame: import('../store/types').GifFrame, fileName
 export const createPerformanceMonitor = () => {
   let startTime = 0
   let startMemory = 0
-  
+
   const start = () => {
     startTime = performance.now()
     startMemory = (performance as any).memory?.usedJSHeapSize || 0
   }
-  
+
   const end = () => {
     const endTime = performance.now()
     const endMemory = (performance as any).memory?.usedJSHeapSize || 0
-    
+
     return {
       executionTime: endTime - startTime,
       memoryDelta: endMemory - startMemory,
     }
   }
-  
+
   return { start, end }
 }
