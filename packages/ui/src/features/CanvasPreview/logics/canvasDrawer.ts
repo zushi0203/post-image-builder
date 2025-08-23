@@ -3,6 +3,7 @@ import type {
   CanvasSettings, 
   LayerDrawParams
 } from '../defs/CanvasPreviewTypes'
+import type { SnapPoint, SnapResult } from './useCanvasSnap'
 import { CANVAS_CONSTANTS } from '../defs/canvasPreviewConstants'
 
 /**
@@ -324,6 +325,138 @@ export const drawSelectionBox = (
   ctx.fillRect(x + scaledWidth - handleSize/2, y - handleSize/2, handleSize, handleSize) // 右上
   ctx.fillRect(x - handleSize/2, y + scaledHeight - handleSize/2, handleSize, handleSize) // 左下
   ctx.fillRect(x + scaledWidth - handleSize/2, y + scaledHeight - handleSize/2, handleSize, handleSize) // 右下
+
+  ctx.restore()
+}
+
+/**
+ * スナップガイドラインを描画
+ */
+export const drawSnapGuidelines = (
+  ctx: CanvasRenderingContext2D,
+  _snapPoints: SnapPoint[],
+  currentSnapResult: SnapResult | null,
+  canvasSettings: CanvasSettings
+): void => {
+  if (!currentSnapResult?.snapped || !currentSnapResult.snapPoint) return
+
+  const activeSnapPoint = currentSnapResult.snapPoint
+  const snapGuideColor = '#4A90E2'
+  const snapGuideWidth = 1
+  const snapPointRadius = 4
+
+  ctx.save()
+  ctx.strokeStyle = snapGuideColor
+  ctx.fillStyle = snapGuideColor
+  ctx.lineWidth = snapGuideWidth
+  ctx.setLineDash([4, 4])
+
+  // アクティブなスナップポイントの種類に応じてガイドラインを描画
+  const { x: snapX, y: snapY } = activeSnapPoint
+  const { width, height } = canvasSettings
+
+  // 中央スナップの場合は十字線を描画
+  if (activeSnapPoint.id === 'center') {
+    // 水平線
+    ctx.beginPath()
+    ctx.moveTo(0, snapY)
+    ctx.lineTo(width, snapY)
+    ctx.stroke()
+
+    // 垂直線
+    ctx.beginPath()
+    ctx.moveTo(snapX, 0)
+    ctx.lineTo(snapX, height)
+    ctx.stroke()
+  }
+  
+  // 水平方向の中央スナップ（top-center, bottom-center）
+  else if (activeSnapPoint.id.includes('center') && activeSnapPoint.x === width / 2) {
+    ctx.beginPath()
+    ctx.moveTo(snapX, 0)
+    ctx.lineTo(snapX, height)
+    ctx.stroke()
+  }
+  
+  // 垂直方向の中央スナップ（left-center, right-center）
+  else if (activeSnapPoint.id.includes('center') && activeSnapPoint.y === height / 2) {
+    ctx.beginPath()
+    ctx.moveTo(0, snapY)
+    ctx.lineTo(width, snapY)
+    ctx.stroke()
+  }
+  
+  // 角のスナップの場合は角の近くにガイドラインを描画
+  else {
+    const guideLength = 50
+    
+    // 水平ガイドライン
+    if (snapX === 0) {
+      ctx.beginPath()
+      ctx.moveTo(0, snapY)
+      ctx.lineTo(guideLength, snapY)
+      ctx.stroke()
+    } else if (snapX === width) {
+      ctx.beginPath()
+      ctx.moveTo(width - guideLength, snapY)
+      ctx.lineTo(width, snapY)
+      ctx.stroke()
+    }
+    
+    // 垂直ガイドライン
+    if (snapY === 0) {
+      ctx.beginPath()
+      ctx.moveTo(snapX, 0)
+      ctx.lineTo(snapX, guideLength)
+      ctx.stroke()
+    } else if (snapY === height) {
+      ctx.beginPath()
+      ctx.moveTo(snapX, height - guideLength)
+      ctx.lineTo(snapX, height)
+      ctx.stroke()
+    }
+  }
+
+  // アクティブなスナップポイントを強調表示
+  ctx.setLineDash([])
+  ctx.beginPath()
+  ctx.arc(snapX, snapY, snapPointRadius, 0, Math.PI * 2)
+  ctx.fill()
+
+  ctx.restore()
+}
+
+/**
+ * 全スナップポイントを表示（デバッグ用またはヒント用）
+ */
+export const drawAllSnapPoints = (
+  ctx: CanvasRenderingContext2D,
+  snapPoints: SnapPoint[],
+  showLabels: boolean = false
+): void => {
+  const pointColor = '#E2E2E2'
+  const pointRadius = 2
+  const labelColor = '#666666'
+
+  ctx.save()
+  ctx.fillStyle = pointColor
+  ctx.strokeStyle = pointColor
+
+  snapPoints.forEach(point => {
+    // スナップポイントを小さな円で描画
+    ctx.beginPath()
+    ctx.arc(point.x, point.y, pointRadius, 0, Math.PI * 2)
+    ctx.fill()
+
+    // ラベル表示が有効な場合
+    if (showLabels) {
+      ctx.fillStyle = labelColor
+      ctx.font = '10px Arial'
+      ctx.textAlign = 'center'
+      ctx.fillText(point.name, point.x, point.y - 8)
+      ctx.fillStyle = pointColor
+    }
+  })
 
   ctx.restore()
 }

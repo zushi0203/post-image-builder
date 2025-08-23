@@ -27,7 +27,11 @@ export const CanvasPreview = React.forwardRef<
   // カスタムフックで機能を分離
   const { getCanvasCoordinates } = useCanvasCoordinates(canvasRef)
 
-  // 楽観的状態更新を含むレイヤーインタラクション
+  // スナップ機能の状態管理
+  const [snapEnabled] = React.useState(true)
+  const [currentSnapResult, setCurrentSnapResult] = React.useState<any>(null)
+
+  // 楽観的状態更新を含むレイヤーインタラクション（スナップ機能付き）
   const {
     selectedLayerId,
     isDragging,
@@ -37,6 +41,8 @@ export const CanvasPreview = React.forwardRef<
     commitOptimisticState,
   } = useLayerInteraction(
     optimisticLayers,
+    canvasSettings,
+    { enabled: snapEnabled },
     // ドラッグ中の処理
     (layerId, position) => {
       updateOptimisticPosition(layerId, position)
@@ -45,6 +51,10 @@ export const CanvasPreview = React.forwardRef<
     (layerId, position) => {
       onLayerPositionChange?.(layerId, position)
       clearOptimisticState(layerId)
+    },
+    // スナップ状態変更時の処理
+    (snapResult) => {
+      setCurrentSnapResult(snapResult)
     }
   )
 
@@ -98,7 +108,9 @@ export const CanvasPreview = React.forwardRef<
     displayLayers,
     canvasSettings,
     displaySelectedLayer,
-    isDragging
+    isDragging,
+    currentSnapResult,
+    snapEnabled
   )
 
   // マウスイベントハンドラー

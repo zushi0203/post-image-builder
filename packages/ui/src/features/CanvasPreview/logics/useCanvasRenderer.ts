@@ -1,12 +1,15 @@
 import { useCallback, useLayoutEffect, useEffect } from 'react'
 import type { ImageLayer, CanvasSettings } from '../defs/CanvasPreviewTypes'
+import type { SnapResult } from './useCanvasSnap'
 import { 
   initializeCanvas, 
   calculateOutputBounds, 
   drawLayers, 
   drawOutputFrame, 
-  drawSelectionBox 
+  drawSelectionBox,
+  drawSnapGuidelines
 } from './canvasDrawer'
+import { useCanvasSnap } from './useCanvasSnap'
 import { useAnimationFrame } from './useAnimationFrame'
 
 
@@ -19,9 +22,14 @@ export const useCanvasRenderer = (
   layers: ImageLayer[],
   canvasSettings: CanvasSettings,
   selectedLayer: ImageLayer | null,
-  isDragging: boolean = false
+  isDragging: boolean = false,
+  currentSnapResult: SnapResult | null = null,
+  snapEnabled: boolean = false
 ) => {
   const { requestFrame, cancelFrame } = useAnimationFrame()
+  
+  // スナップポイントを取得（視覚的フィードバック用）
+  const { snapPoints } = useCanvasSnap(canvasSettings, { enabled: snapEnabled })
   
 
 
@@ -48,7 +56,12 @@ export const useCanvasRenderer = (
     if (selectedLayer) {
       drawSelectionBox(ctx, selectedLayer)
     }
-  }, [canvasRef, layers, canvasSettings, selectedLayer])
+
+    // スナップガイドラインを描画
+    if (snapEnabled && currentSnapResult?.snapped) {
+      drawSnapGuidelines(ctx, snapPoints, currentSnapResult, canvasSettings)
+    }
+  }, [canvasRef, layers, canvasSettings, selectedLayer, snapEnabled, currentSnapResult, snapPoints])
 
   /**
    * アニメーションフレームでスケジューリングされた再描画
