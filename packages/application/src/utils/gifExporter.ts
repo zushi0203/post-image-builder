@@ -48,7 +48,48 @@ const getImageSize = (imageSource: CanvasImageSource): { width: number; height: 
 }
 
 /**
- * グラデーション領域を検出する
+ * シンプルな色量子化：最も近いパレット色に変換（ディザリングなし）
+ */
+const applySimpleQuantization = (
+  pixels: Uint8Array, 
+  palette: number[][], 
+  width: number, 
+  height: number
+): Uint8Array => {
+  const result = new Uint8Array(width * height)
+  
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const idx = (y * width + x) * 4
+      const pixelIndex = y * width + x
+      const r = pixels[idx]
+      const g = pixels[idx + 1]
+      const b = pixels[idx + 2]
+      
+      // 最も近いパレット色を見つける
+      let bestIndex = 0
+      let minDistance = Infinity
+      
+      for (let i = 0; i < palette.length; i++) {
+        const [pr, pg, pb] = palette[i]
+        const distance = Math.sqrt(
+          (r - pr) ** 2 + (g - pg) ** 2 + (b - pb) ** 2
+        )
+        if (distance < minDistance) {
+          minDistance = distance
+          bestIndex = i
+        }
+      }
+      
+      result[pixelIndex] = bestIndex
+    }
+  }
+  
+  return result
+}
+
+/**
+ * グラデーション領域を検出する（現在未使用）
  */
 const detectGradientAreas = (
   pixels: Uint8Array,
@@ -672,20 +713,20 @@ export const exportLayersToGif = async (
       offset += pixels.length
     })
 
-    // 高品質な色量子化でパレット生成
-    console.log('🎨 Quantizing colors with gifenc...')
+    // gifencでパレット生成（ディザリングなし）
+    console.log('🎨 Quantizing colors with gifenc (no dithering)...')
     const palette = quantize(allPixels, 256)
 
     onProgress?.({ current: 60, total: 100, phase: 'encoding' })
 
-    // フレームを追加（スマートディザリング）
+    // フレームを追加（シンプルな色量子化のみ）
     allFrameCanvases.forEach((canvas, frameIndex) => {
       const ctx = canvas.getContext('2d')!
       const imageData = ctx.getImageData(0, 0, 1280, 720)
       const pixels = new Uint8Array(imageData.data)
 
-      // スマートディザリング（グラデーション領域のみ）を適用
-      const indexedPixels = applySmartDithering(pixels, palette, 1280, 720)
+      // シンプルな色量子化のみ適用（ディザリングなし）
+      const indexedPixels = applySimpleQuantization(pixels, palette, 1280, 720)
       const delay = getFrameDelay(layers, frameIndex)
 
       gif.writeFrame(indexedPixels, 1280, 720, {
@@ -702,7 +743,7 @@ export const exportLayersToGif = async (
     const buffer = gif.bytes()
     const blob = new Blob([buffer], { type: 'image/gif' })
 
-    console.log('✅ GIF export completed successfully with gifenc')
+    console.log('✅ GIF export completed successfully with gifenc (no dithering)')
     onProgress?.({ current: 100, total: 100, phase: 'encoding' })
 
     return blob
