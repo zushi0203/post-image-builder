@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react'
 import type { CanvasCoordinates, CanvasSettings, ImageLayer } from '../defs/CanvasPreviewTypes'
+import { CANVAS_CONSTANTS } from '../defs/canvasPreviewConstants'
 
 export interface SnapPoint {
   id: string
@@ -120,23 +121,32 @@ export const useCanvasSnap = (
   const snapOptions = { ...DEFAULT_SNAP_OPTIONS, ...options }
 
   const snapPoints = useMemo((): SnapPoint[] => {
-    const { width, height } = canvasSettings
-    const halfWidth = width / 2
-    const halfHeight = height / 2
+    const { width: canvasWidth, height: canvasHeight } = canvasSettings
+    
+    // 出力領域の境界を計算
+    const { WIDTH: outputWidth, HEIGHT: outputHeight } = CANVAS_CONSTANTS.OUTPUT_SIZE
+    const centerX = canvasWidth / 2
+    const centerY = canvasHeight / 2
+    const outputLeft = centerX - outputWidth / 2
+    const outputRight = centerX + outputWidth / 2
+    const outputTop = centerY - outputHeight / 2
+    const outputBottom = centerY + outputHeight / 2
+    const outputCenterX = centerX
+    const outputCenterY = centerY
 
     return [
-      // Canvas中央
-      { id: 'center', name: 'Center', x: halfWidth, y: halfHeight },
-      // 4つの角
-      { id: 'top-left', name: 'Top Left', x: 0, y: 0 },
-      { id: 'top-right', name: 'Top Right', x: width, y: 0 },
-      { id: 'bottom-left', name: 'Bottom Left', x: 0, y: height },
-      { id: 'bottom-right', name: 'Bottom Right', x: width, y: height },
-      // 4つの辺の中点
-      { id: 'top-center', name: 'Top Center', x: halfWidth, y: 0 },
-      { id: 'bottom-center', name: 'Bottom Center', x: halfWidth, y: height },
-      { id: 'left-center', name: 'Left Center', x: 0, y: halfHeight },
-      { id: 'right-center', name: 'Right Center', x: width, y: halfHeight },
+      // 出力領域中央（キャンバス中央と同じ）
+      { id: 'center', name: 'Center', x: outputCenterX, y: outputCenterY },
+      // 出力領域の4つの角
+      { id: 'top-left', name: 'Output Top Left', x: outputLeft, y: outputTop },
+      { id: 'top-right', name: 'Output Top Right', x: outputRight, y: outputTop },
+      { id: 'bottom-left', name: 'Output Bottom Left', x: outputLeft, y: outputBottom },
+      { id: 'bottom-right', name: 'Output Bottom Right', x: outputRight, y: outputBottom },
+      // 出力領域の4つの辺の中点
+      { id: 'top-center', name: 'Output Top Center', x: outputCenterX, y: outputTop },
+      { id: 'bottom-center', name: 'Output Bottom Center', x: outputCenterX, y: outputBottom },
+      { id: 'left-center', name: 'Output Left Center', x: outputLeft, y: outputCenterY },
+      { id: 'right-center', name: 'Output Right Center', x: outputRight, y: outputCenterY },
     ]
   }, [canvasSettings.width, canvasSettings.height])
 
