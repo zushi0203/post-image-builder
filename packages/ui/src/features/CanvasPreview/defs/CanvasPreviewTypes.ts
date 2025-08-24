@@ -70,6 +70,7 @@ export interface CanvasPreviewProps {
   layers: ImageLayer[]
   canvasSettings: CanvasSettings
   onLayerPositionChange?: (layerId: string, position: { x: number; y: number }) => void
+  onLayerSelect?: (layerId: string | null) => void
 }
 
 export interface CanvasCoordinates {

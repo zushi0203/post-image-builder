@@ -13,6 +13,7 @@ export const CanvasPreview = React.forwardRef<
   layers,
   canvasSettings,
   onLayerPositionChange,
+  onLayerSelect,
 }, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
@@ -55,7 +56,9 @@ export const CanvasPreview = React.forwardRef<
     // スナップ状態変更時の処理
     (snapResult) => {
       setCurrentSnapResult(snapResult)
-    }
+    },
+    // レイヤー選択時の処理（新規追加）
+    onLayerSelect
   )
 
   // 外部から呼び出し可能な状態確定機能をrefで公開

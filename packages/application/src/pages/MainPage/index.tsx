@@ -49,6 +49,10 @@ const MainPage = () => {
     console.log(`🔄 MainPage: Updating position for layer "${layerId}":`, position)
     updateLayerProperty(layerId, 'position', position)
   }, [updateLayerProperty])
+  const handleLayerSelect = React.useCallback((layerId: string | null) => {
+    console.log(`🎯 MainPage: Canvas layer selection changed to:`, layerId)
+    selectLayer(layerId)
+  }, [selectLayer])
 
   const handleFrameSelect = (layerId: string, frameIndex: number) => {
     setLayerFrame(layerId, frameIndex)
@@ -179,6 +183,7 @@ const MainPage = () => {
                       layers={layers}
                       canvasSettings={canvasSettings}
                       onLayerPositionChange={handleLayerPositionChange}
+                      onLayerSelect={handleLayerSelect}
                     />
                   </div>
                   <div className="drop-overlay">

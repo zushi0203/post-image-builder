@@ -14,7 +14,8 @@ export const useLayerInteraction = (
   snapOptions?: Partial<CanvasSnapOptions>,
   onDragPositionChange?: (layerId: string, position: CanvasCoordinates) => void,
   onDragComplete?: (layerId: string, position: CanvasCoordinates) => void,
-  onSnapStateChange?: (snapResult: SnapResult) => void
+  onSnapStateChange?: (snapResult: SnapResult) => void,
+  onLayerSelect?: (layerId: string | null) => void
 ) => {
   const [selectedLayerId, setSelectedLayerId] = useState<string | null>(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -38,6 +39,14 @@ export const useLayerInteraction = (
   const hitTest = useHitTestCache(layers)
 
   /**
+   * レイヤー選択の変更を処理し、親コンポーネントに通知
+   */
+  const handleLayerSelection = useCallback((layerId: string | null) => {
+    setSelectedLayerId(layerId)
+    onLayerSelect?.(layerId)
+  }, [onLayerSelect])
+
+  /**
    * マウスダウンイベント処理
    */
   const handleMouseDown = useCallback((coordinates: CanvasCoordinates) => {
@@ -45,16 +54,16 @@ export const useLayerInteraction = (
     const clickedLayer = hitTest(x, y)
 
     if (clickedLayer) {
-      setSelectedLayerId(clickedLayer.id)
+      handleLayerSelection(clickedLayer.id)
       setIsDragging(true)
       setDragOffset({
         x: x - clickedLayer.position.x,
         y: y - clickedLayer.position.y,
       })
     } else {
-      setSelectedLayerId(null)
+      handleLayerSelection(null)
     }
-  }, [hitTest])
+  }, [hitTest, handleLayerSelection])
 
   /**
    * マウスムーブイベント処理（スナップ機能付きスロットリング適用）
