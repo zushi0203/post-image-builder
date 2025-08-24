@@ -1,3 +1,4 @@
+import React from "react";
 import {
   Slider,
   NumberField,
@@ -9,7 +10,6 @@ import {
   Popover,
   ListBox,
   ListBoxItem,
-  Key,
 } from "react-aria-components";
 import "./SettingsPanel.css";
 
@@ -17,7 +17,7 @@ export interface SettingsPanelProps {
   scale?: number;
   onScaleChange?: (scale: number) => void;
   outputFormat?: "png" | "gif" | "apng";
-  onFormatChange?: (key: Key | null) => void;
+  onFormatChange?: (format: "png" | "gif" | "apng") => void;
   width?: number;
   height?: number;
   onSizeChange?: (width: number, height: number) => void;

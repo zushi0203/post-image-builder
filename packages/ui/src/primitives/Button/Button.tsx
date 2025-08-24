@@ -1,12 +1,12 @@
 import React from "react";
-import { Button as AriaButton, PressEvent } from "react-aria-components";
+import { Button as AriaButton } from "react-aria-components";
 import "./Button.css";
 
 export interface ButtonProps {
   variant?: "primary" | "secondary" | "success" | "danger";
   size?: "small" | "medium" | "large";
   children: React.ReactNode;
-  onPress?: (e: PressEvent) => void;
+  onPress?: () => void;
   isDisabled?: boolean;
   className?: string;
   type?: "button" | "submit" | "reset";

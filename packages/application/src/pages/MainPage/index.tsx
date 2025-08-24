@@ -114,6 +114,11 @@ const MainPage = () => {
       const blob = await exportLayersToGif(
         layers,
         canvasSettings,
+        {
+          quality: 10,
+          workers: 2,
+          workerScript: "/gif.worker.js",
+        },
         (progress) => {
           setExportProgress(progress);
         },
