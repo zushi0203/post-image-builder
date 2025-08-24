@@ -154,6 +154,7 @@ export const CanvasPreview = React.forwardRef<
           maxWidth: '100%',
           maxHeight: '100%',
           objectFit: 'contain',
+          imageRendering: 'pixelated',
           cursor: getCursorStyle(),
         }}
       />

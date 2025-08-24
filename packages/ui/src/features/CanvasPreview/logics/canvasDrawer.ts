@@ -20,6 +20,9 @@ export const initializeCanvas = (
   canvas.width = canvasSettings.width
   canvas.height = canvasSettings.height
 
+  // ドット絵のピクセルパーフェクト表示のためスムージングを無効化
+  ctx.imageSmoothingEnabled = false
+
   // キャンバスをクリア
   ctx.clearRect(0, 0, canvas.width, canvas.height)
 
@@ -169,6 +172,9 @@ const drawLayerOptimized = (
 
   // 1回の save でまとめて処理
   ctx.save()
+
+  // ドット絵のピクセルパーフェクト描画のためスムージングを無効化
+  ctx.imageSmoothingEnabled = false
 
   // 回転変換を適用（必要時のみ）
   applyRotationTransform(ctx, layer)

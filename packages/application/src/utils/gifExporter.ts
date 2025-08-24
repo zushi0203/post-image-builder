@@ -491,6 +491,9 @@ const drawLayerToCanvas = (
       console.log(`🎬 GIF Frame ${frameIndex}: GIF(${layer.gifInfo.width}×${layer.gifInfo.height}), Frame(${frameWidth}×${frameHeight}), Offset(${currentFrame.left}, ${currentFrame.top})`)
 
       ctx.save()
+      
+      // ドット絵のピクセルパーフェクト描画のためスムージングを無効化
+      ctx.imageSmoothingEnabled = false
 
       // 回転処理（回転中心はGIF全体の中心）
       if (layer.rotation !== 0) {
@@ -516,6 +519,9 @@ const drawLayerToCanvas = (
     const finalY = tempCenterY + relativeY - scaledHeight / 2
 
     ctx.save()
+    
+    // ドット絵のピクセルパーフェクト描画のためスムージングを無効化
+    ctx.imageSmoothingEnabled = false
 
     // 回転処理
     if (layer.rotation !== 0) {
@@ -604,7 +610,8 @@ const renderOutputFrame = (
 
 
 
-  // 中央1280x720px領域を出力Canvasにコピー
+  // 中央1280x720px領域を出力Canvasにコピー（ピクセルパーフェクト）
+  outputCtx.imageSmoothingEnabled = false
   outputCtx.drawImage(
     tempCanvas,
     extractX, extractY, OUTPUT_WIDTH, OUTPUT_HEIGHT,
