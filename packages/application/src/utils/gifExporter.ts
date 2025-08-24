@@ -59,329 +59,329 @@ const getImageSize = (
 /**
  * グラデーション領域を検出する（現在未使用）
  */
-const detectGradientAreas = (
-  pixels: Uint8Array,
-  width: number,
-  height: number,
-): Uint8Array => {
-  const gradientMask = new Uint8Array(width * height);
-  const threshold = 30; // 色差の閾値
+// const detectGradientAreas = (
+//   pixels: Uint8Array,
+//   width: number,
+//   height: number,
+// ): Uint8Array => {
+//   const gradientMask = new Uint8Array(width * height);
+//   const threshold = 30; // 色差の閾値
 
-  for (let y = 1; y < height - 1; y++) {
-    for (let x = 1; x < width - 1; x++) {
-      const idx = (y * width + x) * 4;
-      const r = pixels[idx];
-      const g = pixels[idx + 1];
-      const b = pixels[idx + 2];
+//   for (let y = 1; y < height - 1; y++) {
+//     for (let x = 1; x < width - 1; x++) {
+//       const idx = (y * width + x) * 4;
+//       const r = pixels[idx];
+//       const g = pixels[idx + 1];
+//       const b = pixels[idx + 2];
 
-      // 周囲8ピクセルとの色差を計算
-      let gradientIntensity = 0;
-      const neighbors = [
-        [-1, -1],
-        [0, -1],
-        [1, -1],
-        [-1, 0],
-        [1, 0],
-        [-1, 1],
-        [0, 1],
-        [1, 1],
-      ];
+//       // 周囲8ピクセルとの色差を計算
+//       let gradientIntensity = 0;
+//       const neighbors = [
+//         [-1, -1],
+//         [0, -1],
+//         [1, -1],
+//         [-1, 0],
+//         [1, 0],
+//         [-1, 1],
+//         [0, 1],
+//         [1, 1],
+//       ];
 
-      neighbors.forEach(([dx, dy]) => {
-        const nx = x + dx;
-        const ny = y + dy;
-        const nIdx = (ny * width + nx) * 4;
+//       neighbors.forEach(([dx, dy]) => {
+//         const nx = x + dx;
+//         const ny = y + dy;
+//         const nIdx = (ny * width + nx) * 4;
 
-        const nr = pixels[nIdx];
-        const ng = pixels[nIdx + 1];
-        const nb = pixels[nIdx + 2];
+//         const nr = pixels[nIdx];
+//         const ng = pixels[nIdx + 1];
+//         const nb = pixels[nIdx + 2];
 
-        const colorDiff =
-          Math.abs(r - nr) + Math.abs(g - ng) + Math.abs(b - nb);
-        gradientIntensity = Math.max(gradientIntensity, colorDiff);
-      });
+//         const colorDiff =
+//           Math.abs(r - nr) + Math.abs(g - ng) + Math.abs(b - nb);
+//         gradientIntensity = Math.max(gradientIntensity, colorDiff);
+//       });
 
-      // グラデーションが検出された場合は1、そうでなければ0
-      gradientMask[y * width + x] = gradientIntensity > threshold ? 1 : 0;
-    }
-  }
+//       // グラデーションが検出された場合は1、そうでなければ0
+//       gradientMask[y * width + x] = gradientIntensity > threshold ? 1 : 0;
+//     }
+//   }
 
-  return gradientMask;
-};
+//   return gradientMask;
+// };
 
 /**
  * スマートディザリング：グラデーション部分のみディザリングを適用
  */
-const applySmartDithering = (
-  pixels: Uint8Array,
-  palette: number[][],
-  width: number,
-  height: number,
-): Uint8Array => {
-  const result = new Uint8Array(width * height);
-  const rgbaPixels = new Uint8Array(pixels.length);
-  rgbaPixels.set(pixels);
+// const applySmartDithering = (
+//   pixels: Uint8Array,
+//   palette: number[][],
+//   width: number,
+//   height: number,
+// ): Uint8Array => {
+//   const result = new Uint8Array(width * height);
+//   const rgbaPixels = new Uint8Array(pixels.length);
+//   rgbaPixels.set(pixels);
 
-  // グラデーション領域を検出
-  const gradientMask = detectGradientAreas(pixels, width, height);
-  console.log(
-    `🎨 Detected gradient areas: ${gradientMask.filter((x) => x === 1).length} pixels`,
-  );
+//   // グラデーション領域を検出
+//   const gradientMask = detectGradientAreas(pixels, width, height);
+//   console.log(
+//     `🎨 Detected gradient areas: ${gradientMask.filter((x) => x === 1).length} pixels`,
+//   );
 
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const idx = (y * width + x) * 4;
-      const pixelIndex = y * width + x;
-      const r = rgbaPixels[idx];
-      const g = rgbaPixels[idx + 1];
-      const b = rgbaPixels[idx + 2];
+//   for (let y = 0; y < height; y++) {
+//     for (let x = 0; x < width; x++) {
+//       const idx = (y * width + x) * 4;
+//       const pixelIndex = y * width + x;
+//       const r = rgbaPixels[idx];
+//       const g = rgbaPixels[idx + 1];
+//       const b = rgbaPixels[idx + 2];
 
-      // 最も近いパレット色を見つける
-      let bestIndex = 0;
-      let minDistance = Infinity;
+//       // 最も近いパレット色を見つける
+//       let bestIndex = 0;
+//       let minDistance = Infinity;
 
-      for (let i = 0; i < palette.length; i++) {
-        const [pr, pg, pb] = palette[i];
-        const distance = Math.sqrt(
-          (r - pr) ** 2 + (g - pg) ** 2 + (b - pb) ** 2,
-        );
-        if (distance < minDistance) {
-          minDistance = distance;
-          bestIndex = i;
-        }
-      }
+//       for (let i = 0; i < palette.length; i++) {
+//         const [pr, pg, pb] = palette[i];
+//         const distance = Math.sqrt(
+//           (r - pr) ** 2 + (g - pg) ** 2 + (b - pb) ** 2,
+//         );
+//         if (distance < minDistance) {
+//           minDistance = distance;
+//           bestIndex = i;
+//         }
+//       }
 
-      const [paletteR, paletteG, paletteB] = palette[bestIndex];
-      result[pixelIndex] = bestIndex;
+//       const [paletteR, paletteG, paletteB] = palette[bestIndex];
+//       result[pixelIndex] = bestIndex;
 
-      // グラデーション領域のみディザリング適用
-      if (gradientMask[pixelIndex] === 1) {
-        // 誤差を計算
-        const errorR = r - paletteR;
-        const errorG = g - paletteG;
-        const errorB = b - paletteB;
+//       // グラデーション領域のみディザリング適用
+//       if (gradientMask[pixelIndex] === 1) {
+//         // 誤差を計算
+//         const errorR = r - paletteR;
+//         const errorG = g - paletteG;
+//         const errorB = b - paletteB;
 
-        // Floyd-Steinberg誤差拡散
-        const positions = [
-          [x + 1, y, 7 / 16],
-          [x - 1, y + 1, 3 / 16],
-          [x, y + 1, 5 / 16],
-          [x + 1, y + 1, 1 / 16],
-        ];
+//         // Floyd-Steinberg誤差拡散
+//         const positions = [
+//           [x + 1, y, 7 / 16],
+//           [x - 1, y + 1, 3 / 16],
+//           [x, y + 1, 5 / 16],
+//           [x + 1, y + 1, 1 / 16],
+//         ];
 
-        positions.forEach(([nx, ny, weight]) => {
-          if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
-            const nIdx = (ny * width + nx) * 4;
-            rgbaPixels[nIdx] = Math.max(
-              0,
-              Math.min(255, rgbaPixels[nIdx] + errorR * weight),
-            );
-            rgbaPixels[nIdx + 1] = Math.max(
-              0,
-              Math.min(255, rgbaPixels[nIdx + 1] + errorG * weight),
-            );
-            rgbaPixels[nIdx + 2] = Math.max(
-              0,
-              Math.min(255, rgbaPixels[nIdx + 2] + errorB * weight),
-            );
-          }
-        });
-      }
-    }
-  }
+//         positions.forEach(([nx, ny, weight]) => {
+//           if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+//             const nIdx = (ny * width + nx) * 4;
+//             rgbaPixels[nIdx] = Math.max(
+//               0,
+//               Math.min(255, rgbaPixels[nIdx] + errorR * weight),
+//             );
+//             rgbaPixels[nIdx + 1] = Math.max(
+//               0,
+//               Math.min(255, rgbaPixels[nIdx + 1] + errorG * weight),
+//             );
+//             rgbaPixels[nIdx + 2] = Math.max(
+//               0,
+//               Math.min(255, rgbaPixels[nIdx + 2] + errorB * weight),
+//             );
+//           }
+//         });
+//       }
+//     }
+//   }
 
-  return result;
-};
+//   return result;
+// };
 
 /**
  * フレーム間の差分を計算して差分領域のマスクを生成
  */
-const calculateFrameDifference = (
-  currentPixels: Uint8Array,
-  previousPixels: Uint8Array,
-  width: number,
-  height: number,
-): { differenceMask: Uint8Array; changedPixels: number } => {
-  const differenceMask = new Uint8Array(width * height);
-  let changedPixels = 0;
-  const threshold = 10; // 色差の閾値（小さい変化は無視）
+// const calculateFrameDifference = (
+//   currentPixels: Uint8Array,
+//   previousPixels: Uint8Array,
+//   width: number,
+//   height: number,
+// ): { differenceMask: Uint8Array; changedPixels: number } => {
+//   const differenceMask = new Uint8Array(width * height);
+//   let changedPixels = 0;
+//   const threshold = 10; // 色差の閾値（小さい変化は無視）
 
-  for (let i = 0; i < width * height; i++) {
-    const idx = i * 4;
+//   for (let i = 0; i < width * height; i++) {
+//     const idx = i * 4;
 
-    // RGBAの差分を計算
-    const rDiff = Math.abs(currentPixels[idx] - previousPixels[idx]);
-    const gDiff = Math.abs(currentPixels[idx + 1] - previousPixels[idx + 1]);
-    const bDiff = Math.abs(currentPixels[idx + 2] - previousPixels[idx + 2]);
-    const aDiff = Math.abs(currentPixels[idx + 3] - previousPixels[idx + 3]);
+//     // RGBAの差分を計算
+//     const rDiff = Math.abs(currentPixels[idx] - previousPixels[idx]);
+//     const gDiff = Math.abs(currentPixels[idx + 1] - previousPixels[idx + 1]);
+//     const bDiff = Math.abs(currentPixels[idx + 2] - previousPixels[idx + 2]);
+//     const aDiff = Math.abs(currentPixels[idx + 3] - previousPixels[idx + 3]);
 
-    const totalDiff = rDiff + gDiff + bDiff + aDiff;
+//     const totalDiff = rDiff + gDiff + bDiff + aDiff;
 
-    if (totalDiff > threshold) {
-      differenceMask[i] = 1;
-      changedPixels++;
-    } else {
-      differenceMask[i] = 0;
-    }
-  }
+//     if (totalDiff > threshold) {
+//       differenceMask[i] = 1;
+//       changedPixels++;
+//     } else {
+//       differenceMask[i] = 0;
+//     }
+//   }
 
-  return { differenceMask, changedPixels };
-};
+//   return { differenceMask, changedPixels };
+// };
 
 /**
  * 差分フレーム用の最適化されたピクセルデータを生成
  */
-const createDifferenceFrame = (
-  currentPixels: Uint8Array,
-  previousPixels: Uint8Array,
-  palette: number[][],
-  width: number,
-  height: number,
-  isFirstFrame: boolean = false,
-): { indexedPixels: Uint8Array; compressionRatio: number } => {
-  // 最初のフレームは全体を処理
-  if (isFirstFrame) {
-    const indexedPixels = applySmartDithering(
-      currentPixels,
-      palette,
-      width,
-      height,
-    );
-    return { indexedPixels, compressionRatio: 1.0 };
-  }
+// const createDifferenceFrame = (
+//   currentPixels: Uint8Array,
+//   previousPixels: Uint8Array,
+//   palette: number[][],
+//   width: number,
+//   height: number,
+//   isFirstFrame: boolean = false,
+// ): { indexedPixels: Uint8Array; compressionRatio: number } => {
+//   // 最初のフレームは全体を処理
+//   if (isFirstFrame) {
+//     const indexedPixels = applySmartDithering(
+//       currentPixels,
+//       palette,
+//       width,
+//       height,
+//     );
+//     return { indexedPixels, compressionRatio: 1.0 };
+//   }
 
-  // 差分を計算
-  const { differenceMask, changedPixels } = calculateFrameDifference(
-    currentPixels,
-    previousPixels,
-    width,
-    height,
-  );
+//   // 差分を計算
+//   const { differenceMask, changedPixels } = calculateFrameDifference(
+//     currentPixels,
+//     previousPixels,
+//     width,
+//     height,
+//   );
 
-  const totalPixels = width * height;
-  const compressionRatio = changedPixels / totalPixels;
+//   const totalPixels = width * height;
+//   const compressionRatio = changedPixels / totalPixels;
 
-  console.log(
-    `🔄 Frame difference: ${changedPixels}/${totalPixels} pixels changed (${(compressionRatio * 100).toFixed(1)}%)`,
-  );
+//   console.log(
+//     `🔄 Frame difference: ${changedPixels}/${totalPixels} pixels changed (${(compressionRatio * 100).toFixed(1)}%)`,
+//   );
 
-  // 差分フレーム用のピクセルデータを作成
-  const indexedPixels = new Uint8Array(width * height);
-  const rgbaPixels = new Uint8Array(currentPixels.length);
-  rgbaPixels.set(currentPixels);
+//   // 差分フレーム用のピクセルデータを作成
+//   const indexedPixels = new Uint8Array(width * height);
+//   const rgbaPixels = new Uint8Array(currentPixels.length);
+//   rgbaPixels.set(currentPixels);
 
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const pixelIndex = y * width + x;
-      const idx = pixelIndex * 4;
+//   for (let y = 0; y < height; y++) {
+//     for (let x = 0; x < width; x++) {
+//       const pixelIndex = y * width + x;
+//       const idx = pixelIndex * 4;
 
-      if (differenceMask[pixelIndex] === 1) {
-        // 変更されたピクセルのみ処理
-        const r = rgbaPixels[idx];
-        const g = rgbaPixels[idx + 1];
-        const b = rgbaPixels[idx + 2];
+//       if (differenceMask[pixelIndex] === 1) {
+//         // 変更されたピクセルのみ処理
+//         const r = rgbaPixels[idx];
+//         const g = rgbaPixels[idx + 1];
+//         const b = rgbaPixels[idx + 2];
 
-        // 最も近いパレット色を見つける
-        let bestIndex = 0;
-        let minDistance = Infinity;
+//         // 最も近いパレット色を見つける
+//         let bestIndex = 0;
+//         let minDistance = Infinity;
 
-        for (let i = 0; i < palette.length; i++) {
-          const [pr, pg, pb] = palette[i];
-          const distance = Math.sqrt(
-            (r - pr) ** 2 + (g - pg) ** 2 + (b - pb) ** 2,
-          );
-          if (distance < minDistance) {
-            minDistance = distance;
-            bestIndex = i;
-          }
-        }
+//         for (let i = 0; i < palette.length; i++) {
+//           const [pr, pg, pb] = palette[i];
+//           const distance = Math.sqrt(
+//             (r - pr) ** 2 + (g - pg) ** 2 + (b - pb) ** 2,
+//           );
+//           if (distance < minDistance) {
+//             minDistance = distance;
+//             bestIndex = i;
+//           }
+//         }
 
-        indexedPixels[pixelIndex] = bestIndex;
+//         indexedPixels[pixelIndex] = bestIndex;
 
-        // グラデーション部分の場合はディザリングも適用
-        if (shouldApplyDithering(currentPixels, x, y, width, height)) {
-          const [paletteR, paletteG, paletteB] = palette[bestIndex];
-          const errorR = r - paletteR;
-          const errorG = g - paletteG;
-          const errorB = b - paletteB;
+//         // グラデーション部分の場合はディザリングも適用
+//         if (shouldApplyDithering(currentPixels, x, y, width, height)) {
+//           const [paletteR, paletteG, paletteB] = palette[bestIndex];
+//           const errorR = r - paletteR;
+//           const errorG = g - paletteG;
+//           const errorB = b - paletteB;
 
-          // Floyd-Steinberg誤差拡散（限定的）
-          const positions = [
-            [x + 1, y, 7 / 16],
-            [x, y + 1, 5 / 16],
-          ];
+//           // Floyd-Steinberg誤差拡散（限定的）
+//           const positions = [
+//             [x + 1, y, 7 / 16],
+//             [x, y + 1, 5 / 16],
+//           ];
 
-          positions.forEach(([nx, ny, weight]) => {
-            if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
-              const nPixelIndex = ny * width + nx;
-              if (differenceMask[nPixelIndex] === 1) {
-                // 変更されたピクセルのみに誤差拡散
-                const nIdx = nPixelIndex * 4;
-                rgbaPixels[nIdx] = Math.max(
-                  0,
-                  Math.min(255, rgbaPixels[nIdx] + errorR * weight),
-                );
-                rgbaPixels[nIdx + 1] = Math.max(
-                  0,
-                  Math.min(255, rgbaPixels[nIdx + 1] + errorG * weight),
-                );
-                rgbaPixels[nIdx + 2] = Math.max(
-                  0,
-                  Math.min(255, rgbaPixels[nIdx + 2] + errorB * weight),
-                );
-              }
-            }
-          });
-        }
-      } else {
-        // 変更されていないピクセルは透明にする（GIFの差分圧縮）
-        indexedPixels[pixelIndex] = 0; // 透明色インデックス
-      }
-    }
-  }
+//           positions.forEach(([nx, ny, weight]) => {
+//             if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+//               const nPixelIndex = ny * width + nx;
+//               if (differenceMask[nPixelIndex] === 1) {
+//                 // 変更されたピクセルのみに誤差拡散
+//                 const nIdx = nPixelIndex * 4;
+//                 rgbaPixels[nIdx] = Math.max(
+//                   0,
+//                   Math.min(255, rgbaPixels[nIdx] + errorR * weight),
+//                 );
+//                 rgbaPixels[nIdx + 1] = Math.max(
+//                   0,
+//                   Math.min(255, rgbaPixels[nIdx + 1] + errorG * weight),
+//                 );
+//                 rgbaPixels[nIdx + 2] = Math.max(
+//                   0,
+//                   Math.min(255, rgbaPixels[nIdx + 2] + errorB * weight),
+//                 );
+//               }
+//             }
+//           });
+//         }
+//       } else {
+//         // 変更されていないピクセルは透明にする（GIFの差分圧縮）
+//         indexedPixels[pixelIndex] = 0; // 透明色インデックス
+//       }
+//     }
+//   }
 
-  return { indexedPixels, compressionRatio };
-};
+//   return { indexedPixels, compressionRatio };
+// };
 
 /**
  * ディザリングを適用すべきかを判定（簡易版）
  */
-const shouldApplyDithering = (
-  pixels: Uint8Array,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-): boolean => {
-  const idx = (y * width + x) * 4;
-  const threshold = 20;
+// const shouldApplyDithering = (
+//   pixels: Uint8Array,
+//   x: number,
+//   y: number,
+//   width: number,
+//   height: number,
+// ): boolean => {
+//   const idx = (y * width + x) * 4;
+//   const threshold = 20;
 
-  // 近隣ピクセルとの色差を確認
-  const neighbors = [
-    [0, -1],
-    [1, 0],
-    [0, 1],
-    [-1, 0],
-  ];
+//   // 近隣ピクセルとの色差を確認
+//   const neighbors = [
+//     [0, -1],
+//     [1, 0],
+//     [0, 1],
+//     [-1, 0],
+//   ];
 
-  for (const [dx, dy] of neighbors) {
-    const nx = x + dx;
-    const ny = y + dy;
+//   for (const [dx, dy] of neighbors) {
+//     const nx = x + dx;
+//     const ny = y + dy;
 
-    if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
-      const nIdx = (ny * width + nx) * 4;
-      const rDiff = Math.abs(pixels[idx] - pixels[nIdx]);
-      const gDiff = Math.abs(pixels[idx + 1] - pixels[nIdx + 1]);
-      const bDiff = Math.abs(pixels[idx + 2] - pixels[nIdx + 2]);
+//     if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+//       const nIdx = (ny * width + nx) * 4;
+//       const rDiff = Math.abs(pixels[idx] - pixels[nIdx]);
+//       const gDiff = Math.abs(pixels[idx + 1] - pixels[nIdx + 1]);
+//       const bDiff = Math.abs(pixels[idx + 2] - pixels[nIdx + 2]);
 
-      if (rDiff + gDiff + bDiff > threshold) {
-        return true;
-      }
-    }
-  }
+//       if (rDiff + gDiff + bDiff > threshold) {
+//         return true;
+//       }
+//     }
+//   }
 
-  return false;
-};
+//   return false;
+// };
 
 /**
  * レイヤーから最大アニメーションフレーム数を取得
@@ -704,11 +704,8 @@ const renderOutputFrame = (
 export const exportLayersToGif = async (
   layers: ImageLayer[],
   canvasSettings: CanvasSettings,
-  options: GifExportOptions = {},
   onProgress?: (progress: GifExportProgress) => void,
 ): Promise<Blob> => {
-  const { quality = 1 } = options;
-
   try {
     onProgress?.({ current: 0, total: 100, phase: "analyzing" });
 

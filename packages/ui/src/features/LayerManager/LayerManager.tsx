@@ -1,4 +1,3 @@
-import React from "react";
 import { Button } from "../../primitives/Button";
 import "./LayerManager.css";
 
@@ -15,7 +14,6 @@ export interface LayerManagerProps {
   layers: Layer[];
   onLayerSelect?: (layerId: string) => void;
   onLayerVisibilityToggle?: (layerId: string) => void;
-  onLayerReorder?: (layerId: string, newIndex: number) => void;
   selectedLayerId?: string;
   className?: string;
 }
@@ -24,7 +22,6 @@ export const LayerManager = ({
   layers,
   onLayerSelect,
   onLayerVisibilityToggle,
-  onLayerReorder,
   selectedLayerId,
   className = "",
 }: LayerManagerProps) => {
@@ -82,8 +79,8 @@ const LayerItem = ({
         variant="secondary"
         size="small"
         className={`layer-visibility-btn ${layer.visible ? "visible" : "hidden"}`}
-        onPress={(e) => {
-          e?.stopPropagation?.();
+        onPress={(_e) => {
+          // e?.stopPropagation?.();
           onVisibilityToggle();
         }}
       >
