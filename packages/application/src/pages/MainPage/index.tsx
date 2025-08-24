@@ -1,8 +1,7 @@
 import React from 'react'
 import { useAtom, useAtomValue } from 'jotai'
-import { ToggleSwitch, Button, LayerManager, FileDropArea, CanvasPreview, AnimationTimeline, type CanvasPreviewRef } from '@post-image-builder/ui'
+import { Button, LayerManager, FileDropArea, CanvasPreview, AnimationTimeline, type CanvasPreviewRef } from '@post-image-builder/ui'
 import {
-  previewModeAtom,
   isGeneratingAtom,
   canvasSettingsAtom,
   hasGifLayersAtom,
@@ -16,7 +15,6 @@ import { exportLayersToGif, downloadGif, calculateOutputInfo, type GifExportProg
 import './MainPage.css'
 
 const MainPage = () => {
-  const [previewMode, setPreviewMode] = useAtom(previewModeAtom)
   const [isGenerating, setIsGenerating] = useAtom(isGeneratingAtom)
   const [canvasSettings] = useAtom(canvasSettingsAtom)
   const [, setLayerFrame] = useAtom(setLayerFrameAtom)
@@ -150,13 +148,6 @@ const MainPage = () => {
       {/* ヘッダー */}
       <header className="main-header">
         <h1>Post Image Builder</h1>
-        <ToggleSwitch
-          isSelected={previewMode}
-          onChange={setPreviewMode}
-          aria-label="プレビューモード"
-        >
-          プレビューモード
-        </ToggleSwitch>
       </header>
 
       {/* メインコンテンツ */}
