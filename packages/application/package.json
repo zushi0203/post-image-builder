@@ -8,10 +8,12 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "format": "biome format --write",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "deploy": "gh-pages -d dist"
   },
   "dependencies": {
     "@post-image-builder/ui": "*",
+    "gh-pages": "^6.3.0",
     "gif.js": "^0.2.0",
     "gifenc": "^1.0.3",
     "gifuct-js": "^2.1.2",
