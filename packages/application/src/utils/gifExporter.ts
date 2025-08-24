@@ -786,7 +786,9 @@ export const exportLayersToGif = async (
     gif.finish();
 
     const buffer = gif.bytes();
-    const blob = new Blob([buffer], { type: "image/gif" });
+    // Type assertion to handle gifenc's overly strict type definition
+    // The buffer is actually a standard Uint8Array in practice
+    const blob = new Blob([buffer as BlobPart], { type: "image/gif" });
 
     console.log("✅ GIF export completed successfully with gifenc");
     onProgress?.({ current: 100, total: 100, phase: "encoding" });
