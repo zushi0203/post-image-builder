@@ -1,21 +1,21 @@
-import React from "react";
-import { Switch } from "react-aria-components";
-import "./ToggleSwitch.css";
+import React from 'react'
+import { Switch } from 'react-aria-components'
+import './ToggleSwitch.css'
 
 export interface ToggleSwitchProps {
-  isSelected?: boolean;
-  onChange?: (isSelected: boolean) => void;
-  children?: React.ReactNode;
-  className?: string;
-  "aria-label"?: string;
+  isSelected?: boolean
+  onChange?: (isSelected: boolean) => void
+  children?: React.ReactNode
+  className?: string
+  'aria-label'?: string
 }
 
 export const ToggleSwitch = ({
   isSelected = false,
   onChange,
   children,
-  className = "",
-  "aria-label": ariaLabel,
+  className = '',
+  'aria-label': ariaLabel,
   ...props
 }: ToggleSwitchProps) => {
   return (
@@ -31,7 +31,7 @@ export const ToggleSwitch = ({
         <div className="toggle-switch-indicator" />
       </Switch>
     </div>
-  );
-};
+  )
+}
 
-export default ToggleSwitch;
+export default ToggleSwitch

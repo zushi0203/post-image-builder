@@ -1,86 +1,81 @@
-import React, { useState, useRef } from "react";
-import { Button } from "../../primitives/Button";
-import {
-  Dialog,
-  DialogTrigger,
-  Modal,
-  ModalOverlay,
-} from "react-aria-components";
-import "./FileDropArea.css";
+import React, { useState, useRef } from 'react'
+import { Button } from '../../primitives/Button'
+import { Dialog, DialogTrigger, Modal, ModalOverlay } from 'react-aria-components'
+import './FileDropArea.css'
 
 export interface FileDropAreaProps {
-  onFileDrop?: (files: File[]) => void;
-  accept?: string;
-  multiple?: boolean;
-  className?: string;
-  children?: React.ReactNode;
+  onFileDrop?: (files: File[]) => void
+  accept?: string
+  multiple?: boolean
+  className?: string
+  children?: React.ReactNode
 }
 
 export const FileDropArea = ({
   onFileDrop,
-  accept = "image/*",
+  accept = 'image/*',
   multiple = true,
-  className = "",
+  className = '',
   children,
 }: FileDropAreaProps) => {
-  const [isDragOver, setIsDragOver] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string>("");
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isDragOver, setIsDragOver] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string>('')
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(true);
-  };
+    e.preventDefault()
+    setIsDragOver(true)
+  }
 
   const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
+    e.preventDefault()
     // Only set to false if we're leaving the drop area completely
     if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-      setIsDragOver(false);
+      setIsDragOver(false)
     }
-  };
+  }
 
   const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(false);
+    e.preventDefault()
+    setIsDragOver(false)
 
-    const files = Array.from(e.dataTransfer.files);
-    const imageFiles = files.filter((file) => file.type.startsWith("image/"));
+    const files = Array.from(e.dataTransfer.files)
+    const imageFiles = files.filter(file => file.type.startsWith('image/'))
 
     if (files.length > 0 && imageFiles.length === 0) {
-      setErrorMessage("画像ファイルのみアップロード可能です");
-      return;
+      setErrorMessage('画像ファイルのみアップロード可能です')
+      return
     }
 
     if (imageFiles.length > 0) {
-      onFileDrop?.(imageFiles);
+      onFileDrop?.(imageFiles)
     }
-  };
+  }
 
   const handleFileSelect = () => {
-    fileInputRef.current?.click();
-  };
+    fileInputRef.current?.click()
+  }
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    const imageFiles = files.filter((file) => file.type.startsWith("image/"));
+    const files = Array.from(e.target.files || [])
+    const imageFiles = files.filter(file => file.type.startsWith('image/'))
 
     if (files.length > 0 && imageFiles.length === 0) {
-      setErrorMessage("画像ファイルのみ選択可能です");
-      return;
+      setErrorMessage('画像ファイルのみ選択可能です')
+      return
     }
 
     if (imageFiles.length > 0) {
-      onFileDrop?.(imageFiles);
+      onFileDrop?.(imageFiles)
     }
     // Reset input value to allow selecting the same file again
-    e.target.value = "";
-  };
+    e.target.value = ''
+  }
 
   return (
     <>
       <div
-        className={`file-drop-area ${isDragOver ? "drag-over" : ""} ${className}`}
+        className={`file-drop-area ${isDragOver ? 'drag-over' : ''} ${className}`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
@@ -98,7 +93,9 @@ export const FileDropArea = ({
         {children || (
           <div className="file-drop-content">
             <div className="file-drop-icon">🖼️</div>
-            <p className="file-drop-text">画像をドラッグ&ドロップ</p>
+            <p className="file-drop-text">
+              画像をドラッグ&ドロップ
+            </p>
             <Button variant="primary" onPress={handleFileSelect}>
               ファイル選択
             </Button>
@@ -113,13 +110,15 @@ export const FileDropArea = ({
             <Dialog>
               <h2>エラー</h2>
               <p>{errorMessage}</p>
-              <Button onPress={() => setErrorMessage("")}>OK</Button>
+              <Button onPress={() => setErrorMessage('')}>
+                OK
+              </Button>
             </Dialog>
           </Modal>
         </ModalOverlay>
       </DialogTrigger>
     </>
-  );
-};
+  )
+}
 
-export default FileDropArea;
+export default FileDropArea

@@ -1,7 +1,7 @@
-export { CanvasPreview } from "./CanvasPreview";
-export type {
+export { CanvasPreview } from './CanvasPreview'
+export type { 
   CanvasPreviewProps,
   CanvasPreviewRef,
   ImageLayer,
-  CanvasSettings,
-} from "./defs/CanvasPreviewTypes";
+  CanvasSettings 
+} from './defs/CanvasPreviewTypes'

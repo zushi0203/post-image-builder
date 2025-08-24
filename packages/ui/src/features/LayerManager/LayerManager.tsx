@@ -1,23 +1,23 @@
-import React from "react";
-import { Button } from "../../primitives/Button";
-import "./LayerManager.css";
+import React from 'react'
+import { Button } from '../../primitives/Button'
+import './LayerManager.css'
 
 export interface Layer {
-  id: string;
-  name: string;
-  type: "image" | "background" | "gif";
-  visible: boolean;
-  zIndex: number;
-  averageDelayMs?: number; // GIFレイヤーの平均ディレイ（ms）
+  id: string
+  name: string
+  type: 'image' | 'background' | 'gif'
+  visible: boolean
+  zIndex: number
+  averageDelayMs?: number // GIFレイヤーの平均ディレイ（ms）
 }
 
 export interface LayerManagerProps {
-  layers: Layer[];
-  onLayerSelect?: (layerId: string) => void;
-  onLayerVisibilityToggle?: (layerId: string) => void;
-  onLayerReorder?: (layerId: string, newIndex: number) => void;
-  selectedLayerId?: string;
-  className?: string;
+  layers: Layer[]
+  onLayerSelect?: (layerId: string) => void
+  onLayerVisibilityToggle?: (layerId: string) => void
+  onLayerReorder?: (layerId: string, newIndex: number) => void
+  selectedLayerId?: string
+  className?: string
 }
 
 export const LayerManager = ({
@@ -26,7 +26,7 @@ export const LayerManager = ({
   onLayerVisibilityToggle,
   onLayerReorder,
   selectedLayerId,
-  className = "",
+  className = '',
 }: LayerManagerProps) => {
   return (
     <div className={`layer-manager ${className}`}>
@@ -48,49 +48,44 @@ export const LayerManager = ({
         )}
       </div>
     </div>
-  );
-};
-
-interface LayerItemProps {
-  layer: Layer;
-  isSelected: boolean;
-  onSelect: () => void;
-  onVisibilityToggle: () => void;
+  )
 }
 
-const LayerItem = ({
-  layer,
-  isSelected,
-  onSelect,
-  onVisibilityToggle,
-}: LayerItemProps) => {
+interface LayerItemProps {
+  layer: Layer
+  isSelected: boolean
+  onSelect: () => void
+  onVisibilityToggle: () => void
+}
+
+const LayerItem = ({ layer, isSelected, onSelect, onVisibilityToggle }: LayerItemProps) => {
   return (
     <div
-      className={`layer-item ${isSelected ? "layer-item-selected" : ""}`}
+      className={`layer-item ${isSelected ? 'layer-item-selected' : ''}`}
       onClick={onSelect}
     >
       <span className="layer-icon">
-        {layer.type === "gif" ? "🎬" : layer.type === "image" ? "🖼️" : "🎨"}
+        {layer.type === 'gif' ? '🎬' : layer.type === 'image' ? '🖼️' : '🎨'}
       </span>
       <div className="layer-info">
         <span className="layer-name">{layer.name}</span>
-        {layer.type === "gif" && layer.averageDelayMs && (
+        {layer.type === 'gif' && layer.averageDelayMs && (
           <span className="layer-delay">{layer.averageDelayMs}ms</span>
         )}
       </div>
       <Button
         variant="secondary"
         size="small"
-        className={`layer-visibility-btn ${layer.visible ? "visible" : "hidden"}`}
+        className={`layer-visibility-btn ${layer.visible ? 'visible' : 'hidden'}`}
         onPress={(e) => {
-          e?.stopPropagation?.();
-          onVisibilityToggle();
+          e?.stopPropagation?.()
+          onVisibilityToggle()
         }}
       >
-        {layer.visible ? "👁" : "🚫"}
+        {layer.visible ? '👁' : '🚫'}
       </Button>
     </div>
-  );
-};
+  )
+}
 
-export default LayerManager;
+export default LayerManager

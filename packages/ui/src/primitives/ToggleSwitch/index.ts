@@ -1,1 +1,1 @@
-export { ToggleSwitch, type ToggleSwitchProps } from "./ToggleSwitch";
+export { ToggleSwitch, type ToggleSwitchProps } from './ToggleSwitch'

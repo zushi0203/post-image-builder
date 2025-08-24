@@ -1,2 +1,2 @@
-export * from "./imageUtils";
-export * from "./gifExporter";
+export * from './imageUtils'
+export * from './gifExporter'

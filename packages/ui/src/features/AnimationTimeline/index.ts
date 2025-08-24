@@ -1,6 +1,2 @@
-export { AnimationTimeline } from "./AnimationTimeline";
-export type {
-  AnimationTimelineProps,
-  AnimationTimelineLayer,
-  FrameInfo,
-} from "./AnimationTimeline";
+export { AnimationTimeline } from './AnimationTimeline'
+export type { AnimationTimelineProps, AnimationTimelineLayer, FrameInfo } from './AnimationTimeline'
