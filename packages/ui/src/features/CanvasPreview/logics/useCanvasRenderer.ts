@@ -1,17 +1,16 @@
-import { useCallback, useLayoutEffect, useEffect } from 'react'
-import type { ImageLayer, CanvasSettings } from '../defs/CanvasPreviewTypes'
-import type { SnapResult } from './useCanvasSnap'
-import { 
-  initializeCanvas, 
-  calculateOutputBounds, 
-  drawLayers, 
-  drawOutputFrame, 
+import { useCallback, useLayoutEffect, useEffect } from "react";
+import type { ImageLayer, CanvasSettings } from "../defs/CanvasPreviewTypes";
+import type { SnapResult } from "./useCanvasSnap";
+import {
+  initializeCanvas,
+  calculateOutputBounds,
+  drawLayers,
+  drawOutputFrame,
   drawSelectionBox,
-  drawSnapGuidelines
-} from './canvasDrawer'
-import { useCanvasSnap } from './useCanvasSnap'
-import { useAnimationFrame } from './useAnimationFrame'
-
+  drawSnapGuidelines,
+} from "./canvasDrawer";
+import { useCanvasSnap } from "./useCanvasSnap";
+import { useAnimationFrame } from "./useAnimationFrame";
 
 /**
  * キャンバス描画を管理するカスタムフック
@@ -24,83 +23,89 @@ export const useCanvasRenderer = (
   selectedLayer: ImageLayer | null,
   isDragging: boolean = false,
   currentSnapResult: SnapResult | null = null,
-  snapEnabled: boolean = false
+  snapEnabled: boolean = false,
 ) => {
-  const { requestFrame, cancelFrame } = useAnimationFrame()
-  
-  // スナップポイントを取得（視覚的フィードバック用）
-  const { snapPoints } = useCanvasSnap(canvasSettings, { enabled: snapEnabled })
-  
+  const { requestFrame, cancelFrame } = useAnimationFrame();
 
+  // スナップポイントを取得（視覚的フィードバック用）
+  const { snapPoints } = useCanvasSnap(canvasSettings, {
+    enabled: snapEnabled,
+  });
 
   /**
    * キャンバスの再描画処理
    */
   const redrawCanvas = useCallback(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-    const ctx = initializeCanvas(canvas, canvasSettings)
-    if (!ctx) return
+    const ctx = initializeCanvas(canvas, canvasSettings);
+    if (!ctx) return;
 
     // 出力サイズの座標を計算
-    const outputBounds = calculateOutputBounds(canvas)
+    const outputBounds = calculateOutputBounds(canvas);
 
     // レイヤーを描画
-    drawLayers(ctx, layers, outputBounds)
+    drawLayers(ctx, layers, outputBounds);
 
     // 出力サイズの枠線とラベルを描画
-    drawOutputFrame(ctx, outputBounds)
+    drawOutputFrame(ctx, outputBounds);
 
     // 選択されたレイヤーのバウンディングボックスを描画
     if (selectedLayer) {
-      drawSelectionBox(ctx, selectedLayer)
+      drawSelectionBox(ctx, selectedLayer);
     }
 
     // スナップガイドラインを描画
     if (snapEnabled && currentSnapResult?.snapped) {
-      drawSnapGuidelines(ctx, snapPoints, currentSnapResult, canvasSettings)
+      drawSnapGuidelines(ctx, snapPoints, currentSnapResult, canvasSettings);
     }
-  }, [canvasRef, layers, canvasSettings, selectedLayer, snapEnabled, currentSnapResult, snapPoints])
+  }, [
+    canvasRef,
+    layers,
+    canvasSettings,
+    selectedLayer,
+    snapEnabled,
+    currentSnapResult,
+    snapPoints,
+  ]);
 
   /**
    * アニメーションフレームでスケジューリングされた再描画
    */
   const scheduleRedraw = useCallback(() => {
-    requestFrame(redrawCanvas)
-  }, [requestFrame, redrawCanvas])
+    requestFrame(redrawCanvas);
+  }, [requestFrame, redrawCanvas]);
 
   /**
    * 初回描画とドラッグ終了時の即座再描画
    */
   useLayoutEffect(() => {
     if (!isDragging) {
-      redrawCanvas()
+      redrawCanvas();
     }
-  }, [redrawCanvas, isDragging])
+  }, [redrawCanvas, isDragging]);
 
   /**
    * ドラッグ中の最適化された再描画
    */
   useEffect(() => {
     if (isDragging) {
-      scheduleRedraw()
+      scheduleRedraw();
     }
-  }, [scheduleRedraw, isDragging, layers, selectedLayer])
-
-
+  }, [scheduleRedraw, isDragging, layers, selectedLayer]);
 
   /**
    * クリーンアップ
    */
   useEffect(() => {
     return () => {
-      cancelFrame()
-    }
-  }, [cancelFrame])
+      cancelFrame();
+    };
+  }, [cancelFrame]);
 
   return {
     redrawCanvas,
     scheduleRedraw,
-  }
-}
+  };
+};
