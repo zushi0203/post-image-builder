@@ -123,9 +123,22 @@ export const parseGifFrames = async (
     // フレーム数制限
     const framesToProcess = rawFrames.slice(0, maxFrames);
 
+    // 累積キャンバス（GIF全体サイズ）を作成してフレーム間の状態を管理
+    const accumulativeCanvas = document.createElement("canvas");
+    accumulativeCanvas.width = gif.lsd.width;
+    accumulativeCanvas.height = gif.lsd.height;
+    const accumulativeCtx = accumulativeCanvas.getContext("2d");
+    if (!accumulativeCtx) {
+      throw new Error("Failed to create accumulative canvas context");
+    }
+    
+    // 背景色で初期化（通常は透明）
+    accumulativeCtx.clearRect(0, 0, gif.lsd.width, gif.lsd.height);
+
     // 各フレームを処理
     const frames: import("../store/types").GifFrame[] = [];
     let totalDuration = 0;
+    let previousFrameImageData: ImageData | null = null;
 
     for (let i = 0; i < framesToProcess.length; i++) {
       const rawFrame = framesToProcess[i];
@@ -139,7 +152,70 @@ export const parseGifFrames = async (
       }
 
       try {
+        // 前フレームのdisposalMethodを適用（2フレーム目以降）
+        if (i > 0) {
+          const prevFrame = frames[frames.length - 1];
+          if (prevFrame) {
+            const disposalMethod = prevFrame.disposalMethod;
+            
+            // disposalMethod 2: 背景色に戻す
+            if (disposalMethod === 2) {
+              accumulativeCtx.clearRect(
+                prevFrame.left, 
+                prevFrame.top, 
+                prevFrame.width, 
+                prevFrame.height
+              );
+            }
+            // disposalMethod 3: 前のフレームに戻す
+            else if (disposalMethod === 3 && previousFrameImageData) {
+              accumulativeCtx.putImageData(previousFrameImageData, 0, 0);
+            }
+            // disposalMethod 0,1: 何もしない/保持（デフォルト）
+          }
+        }
+
+        // disposalMethod 3用に現在の状態を保存
+        if (rawFrame.disposalType === 3) {
+          previousFrameImageData = accumulativeCtx.getImageData(
+            0, 0, gif.lsd.width, gif.lsd.height
+          );
+        }
+
+        // フレームを基本処理
         const frame = await processFrame(rawFrame, i, file.name);
+        
+        // 累積キャンバスに現在のフレームを描画
+        // disposalMethodに関係なく、まず現在のフレームを描画
+        accumulativeCtx.drawImage(
+          frame.canvas,
+          rawFrame.dims.left,
+          rawFrame.dims.top
+        );
+
+        // 累積結果から最終的なフレーム画像を生成
+        const finalCanvas = document.createElement("canvas");
+        finalCanvas.width = rawFrame.dims.width;
+        finalCanvas.height = rawFrame.dims.height;
+        const finalCtx = finalCanvas.getContext("2d");
+        if (finalCtx) {
+          finalCtx.drawImage(
+            accumulativeCanvas,
+            rawFrame.dims.left,
+            rawFrame.dims.top,
+            rawFrame.dims.width,
+            rawFrame.dims.height,
+            0,
+            0,
+            rawFrame.dims.width,
+            rawFrame.dims.height
+          );
+          
+          // 最終的なフレームデータを更新
+          frame.canvas = finalCanvas;
+          frame.imageData = finalCtx.getImageData(0, 0, finalCanvas.width, finalCanvas.height);
+        }
+
         frames.push(frame);
         totalDuration += frame.delay;
 
@@ -163,7 +239,7 @@ export const parseGifFrames = async (
       `Failed to extract GIF frames: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
   }
-};
+};;
 
 /**
  * 単一フレームを処理してGifFrame形式に変換
@@ -192,7 +268,7 @@ const processFrame = async (
   const imageData = ctx.createImageData(dims.width, dims.height);
   const data = imageData.data;
 
-  // patchデータを直接コピー（色変換を最小化）
+  // patch データを直接コピー（色変換を最小化）
   for (let i = 0; i < patch.length; i += 4) {
     const r = patch[i];
     const g = patch[i + 1];
@@ -221,6 +297,9 @@ const processFrame = async (
   // 遅延時間（そのまま使用 - 実際のテスト結果に基づく）
   const delay = rawFrame.delay || 100;
 
+  // disposalMethod の正規化（0-3の範囲に制限）
+  const disposalMethod = Math.max(0, Math.min(3, rawFrame.disposalType || 0));
+
   return {
     id: `${fileName}-frame-${index}`,
     canvas,
@@ -231,9 +310,9 @@ const processFrame = async (
     left: dims.left,
     top: dims.top,
     transparentIndex: rawFrame.transparentIndex,
-    disposalMethod: rawFrame.disposalType || 0,
+    disposalMethod,
   };
-};
+};;
 
 /**
  * GIFのループ回数を取得

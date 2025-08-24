@@ -157,6 +157,7 @@ const drawLayerOptimized = (
   // GIFフレームの場合、フレーム位置オフセットを適用
   let offsetX = 0;
   let offsetY = 0;
+  let currentFrame: any = null;
 
   if (
     layer.type === "gif" &&
@@ -168,7 +169,7 @@ const drawLayerOptimized = (
       0,
       Math.min(frameIndex, layer.gifInfo.frames.length - 1),
     );
-    const currentFrame = layer.gifInfo.frames[validIndex];
+    currentFrame = layer.gifInfo.frames[validIndex];
 
     if (currentFrame) {
       // GIF全体サイズとフレームサイズの差を計算
@@ -196,6 +197,30 @@ const drawLayerOptimized = (
   // ドット絵のピクセルパーフェクト描画のためスムージングを無効化
   ctx.imageSmoothingEnabled = false;
 
+  // GIFの場合、disposalMethodを考慮した描画前処理
+  if (layer.type === "gif" && currentFrame) {
+    const disposalMethod = currentFrame.disposalMethod;
+    
+    // disposalMethod 2: 背景色に戻す（フレーム領域をクリア）
+    if (disposalMethod === 2) {
+      // 前のフレーム領域をクリア（透明にする）
+      ctx.save();
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.fillRect(x, y, scaledWidth, scaledHeight);
+      ctx.restore();
+    }
+    // disposalMethod 3: 前のフレームに戻す
+    // 注意：これは通常、複数フレームの履歴が必要ですが、
+    // 現在の実装では簡略化してクリア処理のみ行います
+    else if (disposalMethod === 3) {
+      ctx.save();
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.fillRect(x, y, scaledWidth, scaledHeight);
+      ctx.restore();
+    }
+    // disposalMethod 0,1: 何もしない/フレームを保持（デフォルト動作）
+  }
+
   // 回転変換を適用（必要時のみ）
   applyRotationTransform(ctx, layer);
 
@@ -213,7 +238,7 @@ const drawLayerOptimized = (
 
   // 1回の restore でまとめて復元
   ctx.restore();
-};
+};;
 
 /**
  * 全レイヤーを最適化描画
