@@ -7,7 +7,8 @@ import {
   canvasSettingsAtom,
   hasGifLayersAtom,
   timelineLayersAtom,
-  setLayerFrameAtom
+  setLayerFrameAtom,
+  selectedLayerAtom
 } from '../../store/atoms'
 import { useFileHandler } from '../../hooks/useFileHandler'
 import { useLayerManager } from '../../hooks/useLayerManager'
@@ -29,6 +30,7 @@ const MainPage = () => {
 
   const hasGifLayers = useAtomValue(hasGifLayersAtom)
   const timelineLayers = useAtomValue(timelineLayersAtom)
+  const selectedLayer = useAtomValue(selectedLayerAtom)
 
   const { handleFiles } = useFileHandler()
   const {
@@ -212,8 +214,33 @@ const MainPage = () => {
         <aside className="right-sidebar">
           <section className="settings-panel">
             <div className="setting-group">
-              <h3>ここで拡大率を選択</h3>
-              {/* 拡大率設定コントロール */}
+              <h3>拡大率</h3>
+              {selectedLayer ? (
+                <div className="scale-control">
+                  <label>
+                    倍率: 
+                    <input
+                      type="number"
+                      min="1"
+                      max="10"
+                      step="1"
+                      value={Math.round(selectedLayer.scale)}
+                      onChange={(e) => updateLayerProperty(selectedLayer.id, 'scale', parseInt(e.target.value) || 1)}
+                      style={{
+                        marginLeft: '8px',
+                        marginRight: '4px',
+                        width: '60px',
+                        padding: '4px',
+                        border: '1px solid #ccc',
+                        borderRadius: '4px'
+                      }}
+                    />
+                    x
+                  </label>
+                </div>
+              ) : (
+                <p style={{ color: '#666', fontStyle: 'italic' }}>レイヤーを選択してください</p>
+              )}
             </div>
 
             <div className="setting-group">
