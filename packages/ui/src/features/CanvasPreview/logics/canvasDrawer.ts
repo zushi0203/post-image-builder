@@ -118,23 +118,23 @@ const getImageSize = (
  * GIFレイヤーの場合は全体サイズ、通常画像は個別サイズを取得
  * sandboxの実装に合わせ、GIFの統一サイズを使用する
  */
-const getGifCanvasSize = (
-  layer: ImageLayer,
-): { width: number; height: number } => {
-  // GIFレイヤーの場合はGIF全体のサイズを使用
-  if (layer.type === "gif" && layer.gifInfo) {
-    return {
-      width: layer.gifInfo.width,
-      height: layer.gifInfo.height,
-    };
-  }
+// const getGifCanvasSize = (
+//   layer: ImageLayer,
+// ): { width: number; height: number } => {
+//   // GIFレイヤーの場合はGIF全体のサイズを使用
+//   if (layer.type === "gif" && layer.gifInfo) {
+//     return {
+//       width: layer.gifInfo.width,
+//       height: layer.gifInfo.height,
+//     };
+//   }
 
-  // 通常の画像レイヤーは個別サイズを使用
-  const imageSource = getImageSource(layer);
-  if (!imageSource) return { width: 0, height: 0 };
+//   // 通常の画像レイヤーは個別サイズを使用
+//   const imageSource = getImageSource(layer);
+//   if (!imageSource) return { width: 0, height: 0 };
 
-  return getImageSize(imageSource);
-};
+//   return getImageSize(imageSource);
+// };
 
 /**
  * 単一レイヤーを統合描画（枠外・枠内を一度の処理で）

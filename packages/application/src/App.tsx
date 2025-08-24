@@ -1,4 +1,3 @@
-import React from "react";
 import { Provider } from "jotai";
 import MainPage from "./pages/MainPage";
 
