@@ -1,1 +1,5 @@
-export { LayerManager, type LayerManagerProps, type Layer } from './LayerManager'
+export {
+  LayerManager,
+  type LayerManagerProps,
+  type Layer,
+} from "./LayerManager";

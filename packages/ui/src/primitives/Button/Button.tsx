@@ -1,25 +1,25 @@
-import React from 'react'
-import { Button as AriaButton } from 'react-aria-components'
-import './Button.css'
+import React from "react";
+import { Button as AriaButton } from "react-aria-components";
+import "./Button.css";
 
 export interface ButtonProps {
-  variant?: 'primary' | 'secondary' | 'success' | 'danger'
-  size?: 'small' | 'medium' | 'large'
-  children: React.ReactNode
-  onPress?: () => void
-  isDisabled?: boolean
-  className?: string
-  type?: 'button' | 'submit' | 'reset'
+  variant?: "primary" | "secondary" | "success" | "danger";
+  size?: "small" | "medium" | "large";
+  children: React.ReactNode;
+  onPress?: () => void;
+  isDisabled?: boolean;
+  className?: string;
+  type?: "button" | "submit" | "reset";
 }
 
 export const Button = ({
-  variant = 'primary',
-  size = 'medium',
+  variant = "primary",
+  size = "medium",
   children,
   onPress,
   isDisabled = false,
-  className = '',
-  type = 'button',
+  className = "",
+  type = "button",
   ...props
 }: ButtonProps) => {
   return (
@@ -32,7 +32,7 @@ export const Button = ({
     >
       {children}
     </AriaButton>
-  )
-}
+  );
+};
 
-export default Button
+export default Button;

@@ -1,1 +1,1 @@
-export { FileDropArea, type FileDropAreaProps } from './FileDropArea'
+export { FileDropArea, type FileDropAreaProps } from "./FileDropArea";

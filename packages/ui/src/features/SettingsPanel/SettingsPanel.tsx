@@ -1,27 +1,38 @@
-import React from 'react'
-import { Slider, NumberField, Label, Input, Select, SelectValue, Button, Popover, ListBox, ListBoxItem } from 'react-aria-components'
-import './SettingsPanel.css'
+import React from "react";
+import {
+  Slider,
+  NumberField,
+  Label,
+  Input,
+  Select,
+  SelectValue,
+  Button,
+  Popover,
+  ListBox,
+  ListBoxItem,
+} from "react-aria-components";
+import "./SettingsPanel.css";
 
 export interface SettingsPanelProps {
-  scale?: number
-  onScaleChange?: (scale: number) => void
-  outputFormat?: 'png' | 'gif' | 'apng'
-  onFormatChange?: (format: 'png' | 'gif' | 'apng') => void
-  width?: number
-  height?: number
-  onSizeChange?: (width: number, height: number) => void
-  className?: string
+  scale?: number;
+  onScaleChange?: (scale: number) => void;
+  outputFormat?: "png" | "gif" | "apng";
+  onFormatChange?: (format: "png" | "gif" | "apng") => void;
+  width?: number;
+  height?: number;
+  onSizeChange?: (width: number, height: number) => void;
+  className?: string;
 }
 
 export const SettingsPanel = ({
   scale = 1,
   onScaleChange,
-  outputFormat = 'png',
+  outputFormat = "png",
   onFormatChange,
   width = 1920,
   height = 1080,
   onSizeChange,
-  className = '',
+  className = "",
 }: SettingsPanelProps) => {
   return (
     <div className={`settings-panel ${className}`}>
@@ -89,7 +100,7 @@ export const SettingsPanel = ({
         </Select>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default SettingsPanel
+export default SettingsPanel;
