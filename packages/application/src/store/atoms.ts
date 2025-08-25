@@ -175,7 +175,7 @@ export const reorderLayerAtom = atom(
 // 複数レイヤーを一括更新するatom
 export const updateLayersAtom = atom(
   null,
-  (get, set, newLayers: ImageLayer[]) => {
+  (_, set, newLayers: ImageLayer[]) => {
     set(layersAtom, newLayers);
   },
 );

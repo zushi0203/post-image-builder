@@ -53,7 +53,9 @@ export const LayerManager = ({
         position,
       });
 
-      onLayerReorder(draggedKeys, targetKey, position);
+      // "on"の場合は"after"として扱う
+      const normalizedPosition = position === "on" ? "after" : position;
+      onLayerReorder(draggedKeys, targetKey, normalizedPosition);
     },
   });
 
@@ -96,8 +98,8 @@ export const LayerManager = ({
                 variant="secondary"
                 size="small"
                 className={`layer-visibility-btn ${layer.visible ? "visible" : "hidden"}`}
-                onPress={(e) => {
-                  e?.stopPropagation?.();
+                onPress={(_e) => {
+                  // e?.stopPropagation?.();
                   onLayerVisibilityToggle?.(layer.id);
                 }}
               >
