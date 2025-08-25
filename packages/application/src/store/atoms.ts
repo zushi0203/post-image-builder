@@ -93,7 +93,6 @@ export const outputSettingsAtom = atomWithStorage<OutputSettings>(
 
 // UI状態
 export const previewModeAtom = atom<boolean>(false);
-export const isGeneratingAtom = atom<boolean>(false);
 
 // レイヤー操作用のアクション
 export const addLayerAtom = atom(

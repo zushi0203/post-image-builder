@@ -9,7 +9,6 @@ import {
   type CanvasPreviewRef,
 } from "@post-image-builder/ui";
 import {
-  isGeneratingAtom,
   canvasSettingsAtom,
   hasGifLayersAtom,
   timelineLayersAtom,
@@ -27,7 +26,6 @@ import {
 import "./MainPage.css";
 
 const MainPage = () => {
-  const [isGenerating, setIsGenerating] = useAtom(isGeneratingAtom);
   const [canvasSettings] = useAtom(canvasSettingsAtom);
   const [, setLayerFrame] = useAtom(setLayerFrameAtom);
 
@@ -79,18 +77,6 @@ const MainPage = () => {
     setLayerFrame(layerId, frameIndex);
   };
 
-  const handleGenerateImage = async () => {
-    setIsGenerating(true);
-    try {
-      // TODO: 画像生成処理を実装
-      console.log("Generating image with layers:", layers);
-      await new Promise((resolve) => setTimeout(resolve, 2000)); // 仮の処理時間
-    } catch (error) {
-      console.error("Failed to generate image:", error);
-    } finally {
-      setIsGenerating(false);
-    }
-  };
 
   const handleExportGif = async () => {
     if (layers.length === 0) return;
@@ -312,15 +298,6 @@ const MainPage = () => {
             </div>
 
             <div className="generation-buttons">
-              <Button
-                variant="success"
-                size="large"
-                onPress={handleGenerateImage}
-                isDisabled={isGenerating}
-              >
-                {isGenerating ? "生成中..." : "画像を生成"}
-              </Button>
-
               {/* GIF生成ボタン */}
               <Button
                 variant="primary"
