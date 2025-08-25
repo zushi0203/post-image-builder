@@ -16,6 +16,7 @@
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    outline: none; /* React Aria ListBoxのフォーカス枠を無効化 */
   }
 
   .layer-list-empty {
@@ -119,5 +120,91 @@
   .layer-visibility-btn:focus-visible {
     outline: 2px solid #5865f2;
     outline-offset: 2px;
+  }
+
+  /* React Aria Components ListBoxItem の選択スタイル */
+  .layer-item[data-selected="true"] {
+    background-color: #5865f2;
+    border-color: #4752c4;
+  }
+
+  .layer-item[data-selected="true"]:hover {
+    background-color: #4752c4;
+  }
+
+  .layer-item[data-selected="true"] .layer-name {
+    color: white;
+  }
+
+  .layer-item[data-selected="true"] .layer-delay {
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  .layer-item[data-selected="true"] .layer-icon {
+    background-color: white;
+    color: #5865f2;
+  }
+
+  /* ドラッグ中のスタイル */
+  .layer-item[data-dragging="true"] {
+    opacity: 0.5;
+    transition: opacity 0.2s ease;
+  }
+
+  /* ドロップインジケーター */
+  .react-aria-DropIndicator {
+    height: 2px;
+    background: #5865f2;
+    margin: 2px 0;
+    border-radius: 1px;
+    opacity: 0;
+    transform: scaleX(0);
+    transition:
+      opacity 0.2s ease,
+      transform 0.2s ease;
+  }
+
+  .react-aria-DropIndicator[data-drop-target="true"] {
+    opacity: 1;
+    transform: scaleX(1);
+    background: #57f287; /* ドロップ可能時は緑色 */
+    box-shadow: 0 0 4px rgba(87, 242, 135, 0.5);
+  }
+
+  /* ドロップインジケーターのアニメーション */
+  .react-aria-DropIndicator[data-drop-target="true"]::before {
+    content: "";
+    position: absolute;
+    left: -4px;
+    top: -2px;
+    width: 8px;
+    height: 6px;
+    background: #57f287;
+    border-radius: 50%;
+    animation: pulse 1s infinite;
+  }
+
+  .react-aria-DropIndicator[data-drop-target="true"]::after {
+    content: "";
+    position: absolute;
+    right: -4px;
+    top: -2px;
+    width: 8px;
+    height: 6px;
+    background: #57f287;
+    border-radius: 50%;
+    animation: pulse 1s infinite 0.5s;
+  }
+
+  @keyframes pulse {
+    0%,
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.7;
+      transform: scale(1.2);
+    }
   }
 }

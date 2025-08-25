@@ -131,7 +131,7 @@ export const parseGifFrames = async (
     if (!accumulativeCtx) {
       throw new Error("Failed to create accumulative canvas context");
     }
-    
+
     // 背景色で初期化（通常は透明）
     accumulativeCtx.clearRect(0, 0, gif.lsd.width, gif.lsd.height);
 
@@ -157,14 +157,14 @@ export const parseGifFrames = async (
           const prevFrame = frames[frames.length - 1];
           if (prevFrame) {
             const disposalMethod = prevFrame.disposalMethod;
-            
+
             // disposalMethod 2: 背景色に戻す
             if (disposalMethod === 2) {
               accumulativeCtx.clearRect(
-                prevFrame.left, 
-                prevFrame.top, 
-                prevFrame.width, 
-                prevFrame.height
+                prevFrame.left,
+                prevFrame.top,
+                prevFrame.width,
+                prevFrame.height,
               );
             }
             // disposalMethod 3: 前のフレームに戻す
@@ -178,19 +178,22 @@ export const parseGifFrames = async (
         // disposalMethod 3用に現在の状態を保存
         if (rawFrame.disposalType === 3) {
           previousFrameImageData = accumulativeCtx.getImageData(
-            0, 0, gif.lsd.width, gif.lsd.height
+            0,
+            0,
+            gif.lsd.width,
+            gif.lsd.height,
           );
         }
 
         // フレームを基本処理
         const frame = await processFrame(rawFrame, i, file.name);
-        
+
         // 累積キャンバスに現在のフレームを描画
         // disposalMethodに関係なく、まず現在のフレームを描画
         accumulativeCtx.drawImage(
           frame.canvas,
           rawFrame.dims.left,
-          rawFrame.dims.top
+          rawFrame.dims.top,
         );
 
         // 累積結果から最終的なフレーム画像を生成
@@ -208,12 +211,17 @@ export const parseGifFrames = async (
             0,
             0,
             rawFrame.dims.width,
-            rawFrame.dims.height
+            rawFrame.dims.height,
           );
-          
+
           // 最終的なフレームデータを更新
           frame.canvas = finalCanvas;
-          frame.imageData = finalCtx.getImageData(0, 0, finalCanvas.width, finalCanvas.height);
+          frame.imageData = finalCtx.getImageData(
+            0,
+            0,
+            finalCanvas.width,
+            finalCanvas.height,
+          );
         }
 
         frames.push(frame);
@@ -239,7 +247,7 @@ export const parseGifFrames = async (
       `Failed to extract GIF frames: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
   }
-};;
+};
 
 /**
  * 単一フレームを処理してGifFrame形式に変換
@@ -312,7 +320,7 @@ const processFrame = async (
     transparentIndex: rawFrame.transparentIndex,
     disposalMethod,
   };
-};;
+};
 
 /**
  * GIFのループ回数を取得

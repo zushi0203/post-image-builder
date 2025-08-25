@@ -50,6 +50,7 @@ const MainPage = () => {
     selectLayer,
     toggleLayerVisibility,
     updateLayerProperty,
+    reorderLayersByPosition,
   } = useLayerManager();
 
   const handleFileDrop = (files: File[]) => {
@@ -190,6 +191,7 @@ const MainPage = () => {
             selectedLayerId={selectedLayerId || undefined}
             onLayerSelect={selectLayer}
             onLayerVisibilityToggle={toggleLayerVisibility}
+            onLayerReorder={reorderLayersByPosition}
           />
         </aside>
 

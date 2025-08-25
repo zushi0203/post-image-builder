@@ -200,12 +200,12 @@ const drawLayerOptimized = (
   // GIFの場合、disposalMethodを考慮した描画前処理
   if (layer.type === "gif" && currentFrame) {
     const disposalMethod = currentFrame.disposalMethod;
-    
+
     // disposalMethod 2: 背景色に戻す（フレーム領域をクリア）
     if (disposalMethod === 2) {
       // 前のフレーム領域をクリア（透明にする）
       ctx.save();
-      ctx.globalCompositeOperation = 'destination-out';
+      ctx.globalCompositeOperation = "destination-out";
       ctx.fillRect(x, y, scaledWidth, scaledHeight);
       ctx.restore();
     }
@@ -214,7 +214,7 @@ const drawLayerOptimized = (
     // 現在の実装では簡略化してクリア処理のみ行います
     else if (disposalMethod === 3) {
       ctx.save();
-      ctx.globalCompositeOperation = 'destination-out';
+      ctx.globalCompositeOperation = "destination-out";
       ctx.fillRect(x, y, scaledWidth, scaledHeight);
       ctx.restore();
     }
@@ -238,7 +238,7 @@ const drawLayerOptimized = (
 
   // 1回の restore でまとめて復元
   ctx.restore();
-};;
+};
 
 /**
  * 全レイヤーを最適化描画

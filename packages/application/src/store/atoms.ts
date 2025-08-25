@@ -172,6 +172,14 @@ export const reorderLayerAtom = atom(
   },
 );
 
+// 複数レイヤーを一括更新するatom
+export const updateLayersAtom = atom(
+  null,
+  (get, set, newLayers: ImageLayer[]) => {
+    set(layersAtom, newLayers);
+  },
+);
+
 // レイヤーの表示/非表示切り替え
 export const toggleLayerVisibilityAtom = atom(
   null,
